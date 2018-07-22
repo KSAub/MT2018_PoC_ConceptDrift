@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.NaturalLanguageClassifier;
 
@@ -46,6 +48,9 @@ public class ExperimentBase {
 				System.exit(-1);
 			}
 		}
+
+		// Programmatically suppress the HTTP logging
+		Logger.getLogger("com.ibm.watson.developer_cloud.util.HttpLogging").setLevel(Level.WARNING);
 
 		// Initialize Watson NLC
 		NLCProperties nlcProps = new NLCProperties();
