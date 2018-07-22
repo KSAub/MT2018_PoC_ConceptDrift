@@ -13,7 +13,6 @@ public class Project {
 	public static final File STACKEXCHANGE_RAW_DATA_DIR = new File("./data/raw/stackexchange");
 	public static final File INTERMEDIATE_DATA_DIR = new File("./data/intermediate");
 	public static final File PROCESSED_DATA_DIR = new File("./data/processed");
-	public static final File LEARNING_CURVE_REPORTS_DIR = new File("./reports/learning-curve");
 	
 	// Files
 	public static final File getDataFile(String name) {

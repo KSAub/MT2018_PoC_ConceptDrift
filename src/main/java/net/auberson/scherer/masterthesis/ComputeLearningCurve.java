@@ -22,7 +22,8 @@ import net.auberson.scherer.masterthesis.util.Sampler;
 public class ComputeLearningCurve {
 
 	private static final int TEST_SET_SIZE = 200;
-
+	public static final File LEARNING_CURVE_REPORTS_DIR = new File("./reports/learning-curve");
+	
 	public static void main(String[] args) throws IOException {
 		if (args.length < 1) {
 			System.err.println("Please specify the classes for which to generate the learning curve.");
@@ -49,7 +50,7 @@ public class ComputeLearningCurve {
 
 			File trainingSet = File.createTempFile("trainingset" + sampleSize + "-", ".csv");
 			File testSet = File.createTempFile("testset" + sampleSize + "-", ".csv");
-			File results = new File(Project.LEARNING_CURVE_REPORTS_DIR, getResultsFileName(classNames));
+			File results = new File(LEARNING_CURVE_REPORTS_DIR, getResultsFileName(classNames));
 			System.out.println("Temporary directory is " + trainingSet.getParent());
 			System.out.println("Results will be appended to " + results.getPath());
 
