@@ -1,0 +1,71 @@
+---
+title: "Data Overview"
+author: "Kirsten Scherer Auberson"
+date: "3/21/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#setwd("/Volumes/documents/MasterThesis/reports")
+#install.packages("knitr")
+library("knitr")
+#In a terminal: ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
+#then:
+#devtools::install_github("jimhester/archive")
+library(archive)
+library(XML)
+```
+
+## Archive structure
+
+The dataset consists of a small number of regular files:
+```{r nonarchives, echo=TRUE}
+setwd("../data/raw/stackexchange")
+regularfiles <- grep(list.files(include.dirs=F), pattern="7z$", inv=T, value=T)
+regularfilesSize <- round(file.size(regularfiles)/1024, digits=0)
+
+dataframe <- data.frame(name=regularfiles, size=regularfilesSize)
+kable(dataframe[order(dataframe$size, decreasing = T),], row.names = F)
+```
+
+(All sizes in KB)
+
+And a large number of 7-zip archives:
+```{r archives, echo=TRUE}
+setwd("../data/raw/stackexchange")
+archives <- grep(list.files(include.dirs=F), pattern="7z$", inv=F, value=T)
+archivesFilecount <- unlist(lapply(archives, function(s) length(archive::archive(s)$path)))
+archivesSize <- round(file.size(archives)/1024, digits=0)
+
+dataframe <- data.frame(name=archives, files=archivesFilecount, size=archivesSize)
+kable(dataframe[order(dataframe$size, decreasing = T),], row.names = F)
+```
+
+(All sizes in KB)
+
+## Contents of the archives:
+
+A typical archive contains 8 XML files:
+```{r archiveContent, echo=TRUE}
+kable(archive::archive("../data/raw/stackexchange/math.stackexchange.com.7z"))
+```
+
+Many archives are accompanied by a 'meta' archive, containing the same files. These are sites that serve questions about a particular sites, e.g. the math meta site would answer questions about the math site, not about mathematics:
+```{r metaArchiveContent, echo=TRUE}
+kable(archive::archive("../data/raw/stackexchange/math.meta.stackexchange.com.7z"))
+```
+
+The archives starting in "stackoverflow.com-" are special archives that contain a single XML file with data that is either aggregated, or common to the entire site, such as the user names: 
+```{r singleArchiveContent, echo=TRUE}
+kable(archive::archive("../data/raw/stackexchange/stackoverflow.com-Users.7z"))
+```
+
+## Structure of the XML files:
+
+```{r posts, echo=TRUE}
+cooking <- archive::archive_read("../data/raw/stackexchange/cooking.stackexchange.com.7z")
+file <- xmlParse(readLines(archive::archive_read(cooking, "Posts.xml")), options = HUGE)
+dataframe <- xmlToDataFrame(readLines(archive::archive_read(cooking, "Posts.xml")))
+
+```
