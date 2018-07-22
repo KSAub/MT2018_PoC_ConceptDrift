@@ -27,6 +27,16 @@ import org.apache.commons.csv.CSVRecord;
 public class Sampler {
 	private static Random rng = new Random();
 
+	/**
+	 * Creates one or more files with data sampled from the 
+	 * 
+	 * @param sampleSize the total size of each data set file 
+	 * @param classNames the names of the classes from which to get samples. The corresponding CSVs must exist under <code>./data/intermediate</code>
+	 * @param classSampleCounts a map containing the number of samples available for each class specified (you can get this using <code>Sampler.getSampleCount(classNames);</code>)
+	 * @param targets the file or files in which to write the samples
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	public static void sample(int sampleSize, Collection<String> classNames, Map<String, Integer> classSampleCounts,
 			File... targets) throws FileNotFoundException, IOException {
 		int targetCount = targets.length;
