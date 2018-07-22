@@ -1,4 +1,4 @@
-# Master Theses Kirsten Scherer Auberson
+# Master Thesis Kirsten Scherer Auberson
 This project contains the entire source code and directory structure for the code supporting my Master Thesis
 
 ## Directory Structure
@@ -31,14 +31,17 @@ MasterThesisKSA                                          -> The project's root d
 │                                   
 └───src                                                  -> Source code of the Proof-of-Concept implementation
 │   │
-│   └───package1                                         -> The source will be subdivided in packages, the exact structure will
-│       │   file1.py                                        depend on the language used
-│       │   file2.py
+│   └───main                                             
+│       │   
+│       └───java                                         -> Java source code, organised in packages
 │       │   ...
+│       │   
+│       └───resources                                    -> Configuration files used by the Java code
+│           ...
 │   
 └───target                                               -> Compiled, executable code of the Proof-of-Concept implementation
-│   │   package1.whl                                        The structure and contents will depend on the language used.
+│   │   MasterThesisKSA-0.0.1-SNAPSHOT.jar                  The structure and contents will depend on the language used.
 │   │   ...
 │   
 ```
-# MT2018_PoC_ConceptDrift
+
