@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.csv.CSVFormat;
@@ -16,6 +17,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.NaturalLanguageClassifier;
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.ClassificationCollection;
+import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.ClassifiedClass;
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.Classifier;
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.ClassifierList;
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.ClassifyCollectionOptions;
@@ -73,10 +75,78 @@ public class BatchClassifier {
 	}
 
 	/**
+	 * Classify the contents of a data set, write the results to a CSV file. <br>
+	 * 
+	 * @param input
+	 *            a File pointing to a CSV with at least 2 columns: Text and Class
+	 * @param sampleSize
+	 *            the number of samples in the File passed
+	 * @param output
+	 *            a file to which the results will be appended
+	 */
+	public void classify(File input, File output) {
+
+		// Parse the CSV file
+		Iterator<CSVRecord> inputCsv = null;
+		try {
+			inputCsv = CSVFormat.DEFAULT.parse(new FileReader(input)).iterator();
+		} catch (IOException e) {
+			System.err.println("A error occured trying to read CSV file at " + input.getAbsolutePath());
+			e.printStackTrace();
+			System.exit(-1);
+		}
+
+		// Open the output file for appending ("true")
+		PrintWriter out = null;
+		try {
+			out = new PrintWriter(new FileWriter(output, true));
+		} catch (IOException e) {
+			System.err.println("Unable to open the output file at " + input.getAbsolutePath());
+			e.printStackTrace();
+			System.exit(-1);
+		}
+
+		// Call the classifier in batches, append the result to output file
+		Batch batch = new Batch(classifier);
+
+		while (inputCsv.hasNext()) {
+			CSVRecord csvRecord = inputCsv.next();
+			batch.add(csvRecord.get(0), csvRecord.get(1).trim());
+
+			if (batch.isFull() || !inputCsv.hasNext()) {
+
+				ClassificationCollection results = service.classifyCollection(batch.getClassifyCollectionOptions())
+						.execute();
+
+				for (CollectionItem result : results.getCollection()) {
+					// This is the class with the highest confidence:
+					ClassifiedClass classification = result.getClasses().get(0);
+
+					// Output the original text (in quotes)...
+					out.print("\"" + result.getText() + "\", ");
+					// ...the expected value...
+					out.print(batch.expectedValues.get(result.getText()) + ", ");
+					// ...the detected class...
+					out.print(classification.getClassName() + ", ");
+					// ...and the confidence
+					out.print(classification.getConfidence() + ", ");
+					out.println();
+				}
+
+				batch = new Batch(classifier);
+			}
+		}
+
+		// Close the output file, writing everything to disk
+		out.close();
+	}
+
+	/**
 	 * Classify the contents of a data set, calculate the accuracy of the
 	 * classifier, and append the result to a file.<br>
-	 * The results written to the file are in the following format: sample size,
-	 * label, # processed, # correct, # incorrect, accuracy % <br>
+	 * <br>
+	 * The results written to the file are in the following format: <br>
+	 * sample size, label, # processed, # correct, # incorrect, accuracy % <br>
 	 * 
 	 * @param input
 	 *            a File pointing to a CSV with at least 2 columns: Text and Class
