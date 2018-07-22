@@ -5,9 +5,15 @@ pushd . > /dev/null
 cd "$(dirname "$0")"
 
 case $1 in
+	
     extract)
     java -classpath "./target/*" -Xmx4G -XX:+UseParallelGC -XX:-UseGCOverheadLimit -DentityExpansionLimit=0 -DtotalEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 net.auberson.scherer.masterthesis.Extract
     ;;
+    
+    learningcurve)
+    java -classpath "./target/*" net.auberson.scherer.masterthesis.ComputeLearningCurve
+    ;;
+    
     *)    # unknown command
     echo "USAGE:                                                                         "
     echo "- Extract Dataset: $0 extract"
@@ -15,6 +21,12 @@ case $1 in
     echo "    subdirectory named 'stackoverflow' containing a number of 7z files). "
     echo "    Generates many dataset CSVs in ./data/intermediate (one CSV per class,"
     echo "    and a CSV containing the dataset sizes)."
+    echo "- Compute Learning Curve: $0 learningcurve <categories>"
+    echo "    E.g. $0 learningcurve electronics gaming security travel cooking"
+    echo "    Trains a classifier for the given categories (the corresponding CSV in "
+    echo "    ./data/intermediate must exist) with varying training set sizes, and "
+    echo "    outputs the Accuracy for each size to a CSV in ./reports/learning-curve"     
+    
     ;;
 esac
 
