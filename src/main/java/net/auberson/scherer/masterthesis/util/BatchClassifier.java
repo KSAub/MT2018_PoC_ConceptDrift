@@ -23,7 +23,9 @@ import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.Class
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.CollectionItem;
 
 /**
- * A utility that allows the classifier to be called on large files.
+ * A utility that allows the classifier to be called on large files. <br>
+ * This class will group together samples in Batches, and call the classifier
+ * once per batch, then merge the results.
  *
  */
 public class BatchClassifier {
@@ -70,7 +72,22 @@ public class BatchClassifier {
 		this.service = service;
 	}
 
-	public void classify(File input, int sampleSize, String label, File output)
+	/**
+	 * Classify the contents of a data set, calculate the accuracy of the
+	 * classifier, and append the result to a file.<br>
+	 * The results written to the file are in the following format: sample size,
+	 * label, # processed, # correct, # incorrect, accuracy % <br>
+	 * 
+	 * @param input
+	 *            a File pointing to a CSV with at least 2 columns: Text and Class
+	 * @param sampleSize
+	 *            the number of samples in the File passed
+	 * @param label
+	 *            a label passed to the output file
+	 * @param output
+	 *            a file to which the results will be appended
+	 */
+	public void evaluateAccuracy(File input, int sampleSize, String label, File output)
 			throws FileNotFoundException, IOException {
 		CSVParser inputCsv = CSVFormat.DEFAULT.parse(new FileReader(input));
 
@@ -158,6 +175,10 @@ public class BatchClassifier {
 		return null;
 	}
 
+	/**
+	 * Causes the underlying classifier to be deleted from the IBM Cloud. This
+	 * object cannot be used afterwards.
+	 */
 	public void delete() {
 		service.deleteClassifier(classifier.getClassifierId()).execute();
 	}

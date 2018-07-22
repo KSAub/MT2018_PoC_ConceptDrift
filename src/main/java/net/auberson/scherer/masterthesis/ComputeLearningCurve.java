@@ -63,9 +63,9 @@ public class ComputeLearningCurve {
 
 			try {
 				System.out.println("Processing training set");
-				classifier.classify(trainingSet, sampleSize * classCount, "training", results);
+				classifier.evaluateAccuracy(trainingSet, sampleSize * classCount, "training", results);
 				System.out.println("Processing test set");
-				classifier.classify(testSet, sampleSize * classCount, "validation", results);
+				classifier.evaluateAccuracy(testSet, sampleSize * classCount, "validation", results);
 			} finally {
 				classifier.delete();
 				System.out.println("Deleted Classifier " + classifier);

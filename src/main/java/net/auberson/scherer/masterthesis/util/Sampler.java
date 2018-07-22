@@ -28,57 +28,71 @@ public class Sampler {
 	private static Random rng = new Random();
 
 	/**
-	 * Creates one or more files with data sampled from the 
+	 * Creates one or more files with data sampled from the
 	 * 
-	 * @param sampleSize the total size of each data set file 
-	 * @param classNames the names of the classes from which to get samples. The corresponding CSVs must exist under <code>./data/intermediate</code>
-	 * @param classSampleCounts a map containing the number of samples available for each class specified (you can get this using <code>Sampler.getSampleCount(classNames);</code>)
-	 * @param targets the file or files in which to write the samples
+	 * @param sampleSize
+	 *            the total size of each data set file
+	 * @param classNames
+	 *            the names of the classes from which to get samples. The
+	 *            corresponding CSVs must exist under
+	 *            <code>./data/intermediate</code>
+	 * @param classSampleCounts
+	 *            a map containing the number of samples available for each class
+	 *            specified (you can get this using
+	 *            <code>Sampler.getSampleCount(classNames);</code>)
+	 * @param targets
+	 *            the file or files in which to write the samples
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
 	public static void sample(int sampleSize, Collection<String> classNames, Map<String, Integer> classSampleCounts,
-			File... targets) throws FileNotFoundException, IOException {
+			File... targets) {
 		int targetCount = targets.length;
 
 		// Open output files
-		PrintWriter out[] = new PrintWriter[targets.length];
-		for (int i = 0; i < targets.length; i++) {
-			out[i] = new PrintWriter(targets[i]);
-		}
-
-		for (String className : classNames) {
-			int classSampleCount = classSampleCounts.get(className);
-			if (classSampleCount < sampleSize * targetCount) {
-				throw new IllegalArgumentException("Only " + classSampleCount + " exist for class '" + className
-						+ "', not enough to pick " + (sampleSize * targetCount) + " samples.");
+		try {
+			PrintWriter out[] = new PrintWriter[targets.length];
+			for (int i = 0; i < targets.length; i++) {
+				out[i] = new PrintWriter(targets[i]);
 			}
-			List<Integer> sampledLines = sampleRandomNumbersWithoutRepetition(0, classSampleCount - 1,
-					sampleSize * targetCount);
 
-			// Open input file
-			FileInputStream in = new FileInputStream(Project.getDataFile(className));
-			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
-			int lineNumber = 0;
-			int lineCount = 0;
-			while (!sampledLines.isEmpty()) {
-				while (sampledLines.get(0).intValue() > lineNumber++) {
-					reader.readLine();
+			for (String className : classNames) {
+				int classSampleCount = classSampleCounts.get(className);
+				if (classSampleCount < sampleSize * targetCount) {
+					throw new IllegalArgumentException("Only " + classSampleCount + " exist for class '" + className
+							+ "', not enough to pick " + (sampleSize * targetCount) + " samples.");
 				}
-				sampledLines.remove(0);
-				String readLine = reader.readLine();
-				assert(!readLine.isEmpty());
-				out[lineCount++ % targetCount].println(readLine);
-			}
-			//Close the input file
-			reader.close();
-			in.close();
-		}
+				List<Integer> sampledLines = sampleRandomNumbersWithoutRepetition(0, classSampleCount - 1,
+						sampleSize * targetCount);
 
-		//Close the output files
-		for (int i = 0; i < targets.length; i++) {
-			out[i].close();
+				// Open input file
+				FileInputStream in = new FileInputStream(Project.getDataFile(className));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+				int lineNumber = 0;
+				int lineCount = 0;
+				while (!sampledLines.isEmpty()) {
+					while (sampledLines.get(0).intValue() > lineNumber++) {
+						reader.readLine();
+					}
+					sampledLines.remove(0);
+					String readLine = reader.readLine();
+					assert (!readLine.isEmpty());
+					out[lineCount++ % targetCount].println(readLine);
+				}
+				// Close the input file
+				reader.close();
+				in.close();
+			}
+
+			// Close the output files
+			for (int i = 0; i < targets.length; i++) {
+				out[i].close();
+			}
+		} catch (IOException e) {
+			System.err.println("A disk error occured trying to generate the data set file.");
+			e.printStackTrace();
+			System.exit(-1);
 		}
 	}
 
