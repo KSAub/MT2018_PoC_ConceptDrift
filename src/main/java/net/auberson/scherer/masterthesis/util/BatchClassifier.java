@@ -76,6 +76,9 @@ public class BatchClassifier {
 
 	/**
 	 * Classify the contents of a data set, write the results to a CSV file. <br>
+	 * <br>
+	 * The results written to the file are in the following format: <br>
+	 * sample text, expected class, detected class, confidence <br>
 	 * 
 	 * @param input
 	 *            a File pointing to a CSV with at least 2 columns: Text and Class
@@ -253,6 +256,10 @@ public class BatchClassifier {
 		service.deleteClassifier(classifier.getClassifierId()).execute();
 	}
 
+	public String getName() {
+		return classifier.getName();
+	}
+	
 	@Override
 	public String toString() {
 		return classifier.toString();

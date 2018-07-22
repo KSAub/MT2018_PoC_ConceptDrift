@@ -92,6 +92,13 @@ public class ExperimentBase {
 		return builder.append(".csv").toString();
 	}
 
+	/**
+	 * Create a new classifier, using a training set to train it from scratch
+	 * 
+	 * @param trainingSet a file containing the training set CSV: A text in the first column, the expected class in the second 
+	 * @param nameSuffix a suffix (or several) to use in naming the classifier
+	 * @return a trained BatchClassifier
+	 */
 	protected BatchClassifier trainClassifier(File trainingSet, String... nameSuffix) {
 		StringBuilder name = new StringBuilder("Classifier");
 		for (String string : nameSuffix) {
