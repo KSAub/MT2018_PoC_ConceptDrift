@@ -4,9 +4,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -18,7 +19,8 @@ import org.apache.commons.csv.CSVRecord;
 
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.NaturalLanguageClassifier;
 
-import net.auberson.scherer.masterthesis.model.Result;
+import net.auberson.scherer.masterthesis.model.ClassifierResult;
+import net.auberson.scherer.masterthesis.model.Element;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
 import net.auberson.scherer.masterthesis.util.NLCProperties;
 import net.auberson.scherer.masterthesis.util.Sampler;
@@ -30,7 +32,7 @@ import net.auberson.scherer.masterthesis.util.Sampler;
 public class ExperimentBase {
 
 	protected final int classCount;
-	protected final Collection<String> classNames;
+	protected final List<String> classNames;
 	protected final NaturalLanguageClassifier service;
 	protected final Map<String, Integer> sampleCount;
 
@@ -103,8 +105,11 @@ public class ExperimentBase {
 	/**
 	 * Create a new classifier, using a training set to train it from scratch
 	 * 
-	 * @param trainingSet a file containing the training set CSV: A text in the first column, the expected class in the second 
-	 * @param nameSuffix a suffix (or several) to use in naming the classifier
+	 * @param trainingSet
+	 *            a file containing the training set CSV: A text in the first
+	 *            column, the expected class in the second
+	 * @param nameSuffix
+	 *            a suffix (or several) to use in naming the classifier
 	 * @return a trained BatchClassifier
 	 */
 	protected BatchClassifier trainClassifier(File trainingSet, String... nameSuffix) {
@@ -121,14 +126,17 @@ public class ExperimentBase {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * From a Results CSV file, retrieve the N entries with the lowest confidence
-	 * @param results File object pointing to the results file
-	 * @param n number of entries to return
+	 * 
+	 * @param results
+	 *            File object pointing to the results file
+	 * @param n
+	 *            number of entries to return
 	 * @return the N results with the lowest confidence
 	 */
-	protected List<Result> getBottomN(File results, int n) {
+	protected List<ClassifierResult> getBottomN(File results, int n) {
 		CSVParser inputCsv = null;
 		try {
 			inputCsv = CSVFormat.DEFAULT.parse(new FileReader(results));
@@ -138,12 +146,43 @@ public class ExperimentBase {
 			System.exit(-1);
 		}
 
-		List<Result> resultList = new ArrayList<Result>();
+		List<ClassifierResult> resultList = new ArrayList<ClassifierResult>();
 		for (CSVRecord csvRecord : inputCsv) {
-			resultList.add(new Result(csvRecord));
+			resultList.add(new ClassifierResult(csvRecord));
 		}
-		resultList.sort(Result.COMPARATOR);
+		try {
+			inputCsv.close();
+		} catch (IOException e) {
+			System.err.println("Unable to close the result CSV at '" + results.getAbsolutePath() + "'");
+			e.printStackTrace();
+		}
+
+		resultList.sort(ClassifierResult.COMPARATOR);
 
 		return resultList.subList(0, Math.min(resultList.size(), n));
 	}
+
+	/**
+	 * Outputs the samples to the given file as CSV: First column is the text,
+	 * second is the class.
+	 * 
+	 * @param samples
+	 * @param outputFile
+	 */
+	protected void outputSamples(List<Element> samples, File outputFile) {
+		PrintWriter out;
+		try {
+			out = new PrintWriter(outputFile);
+			for (Element sample : samples) {
+				out.print("\"" + sample.getText() + "\", ");
+				out.println(sample.getClassLabel());
+			}
+			out.close();
+		} catch (FileNotFoundException e) {
+			System.err.println("Unable to write samples to dataset CSV at '" + outputFile.getAbsolutePath() + "'");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
+
 }

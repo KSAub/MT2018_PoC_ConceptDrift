@@ -1,17 +1,11 @@
 package net.auberson.scherer.masterthesis;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-
-import net.auberson.scherer.masterthesis.model.Result;
+import net.auberson.scherer.masterthesis.model.ClassifierResult;
+import net.auberson.scherer.masterthesis.model.Element;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
 import net.auberson.scherer.masterthesis.util.Sampler;
 
@@ -33,7 +27,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	 *            the name of the classes to use for experiment 1, as arguments
 	 */
 	public static void main(String[] args) {
-		new Experiment1(args).run();
+		new Experiment1(args).test();
 	}
 
 	public Experiment1(String[] classes) {
@@ -43,10 +37,35 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	public void run() {
 		System.out.println();
 		System.out.println("[ Initial Iteration ]");
+
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
 		System.out.println("Creating training set in " + trainingSet.getPath());
 		Sampler.sample(TRAINING_SET_SIZE, classNames, sampleCount, trainingSet);
+		
 		File output = trainAndClassify(trainingSet, 0);
+
+		// This list simulates the entries that would have been manually reviewed:
+		List<Element> reviewedEntries = new ArrayList<Element>();
+		// This file will contain a copy of these entries:
+		File reviewFile;
+
+		for (int i = 1; i <= ITERATIONS; i++) {
+			System.out.println();
+			System.out.println("[ Iteration " + i + " ]");
+
+			reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
+			System.out.println("Creating review file in " + trainingSet.getPath());
+			reviewedEntries.addAll(getBottomN(output, classCount * 5));
+			outputSamples(reviewedEntries, reviewFile); // This is just for illustration purposes
+
+			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
+			System.out.println("Creating training set in " + trainingSet.getPath());
+			outputSamples(reviewedEntries, trainingSet);
+			int remainingSamples = TRAINING_SET_SIZE + Math.floorDiv(-reviewedEntries.size(), classCount);
+			Sampler.sample(remainingSamples, classNames, sampleCount, trainingSet);
+			output = trainAndClassify(trainingSet, i);
+		}
+
 	}
 
 	private File trainAndClassify(File input, Integer iter) {
@@ -61,6 +80,9 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		System.out.println("Classifying test set into " + output.getPath());
 		classifier.classify(testSet, output);
 
+		File confMatrix = getEmptyFile(DATA_DIR, "Iteration", iter.toString(), "ConfusionMatrix");
+		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
+		
 		System.out.println("Deleting Classifier " + classifier.getName());
 		classifier.delete();
 

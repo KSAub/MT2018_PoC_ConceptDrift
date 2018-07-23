@@ -43,3 +43,4 @@ data/raw/*
 
 # Docs directory (will be published separately)
 docs
+/target/
