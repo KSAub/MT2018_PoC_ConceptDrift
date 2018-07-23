@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -76,7 +77,8 @@ public class Sampler {
 		try {
 			PrintWriter out[] = new PrintWriter[targets.length];
 			for (int i = 0; i < targets.length; i++) {
-				out[i] = new PrintWriter(targets[i]);
+				// Append to the samples file
+				out[i] = new PrintWriter(new FileWriter(targets[i], true));
 			}
 
 			int totalSampleCount = 0;
