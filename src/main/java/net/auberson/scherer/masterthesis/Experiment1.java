@@ -14,7 +14,7 @@ import net.auberson.scherer.masterthesis.util.Sampler;
  */
 public class Experiment1 extends ExperimentBase implements Runnable {
 
-	public static final File DATA_DIR = new File("./data/processed/ex1");
+	public static final File DATA_DIR = new File("./data/processed/experiment1");
 
 	private static final int TRAINING_SET_SIZE = 150;
 	private static final int TEST_SET_SIZE = 600;
@@ -27,7 +27,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	 *            the name of the classes to use for experiment 1, as arguments
 	 */
 	public static void main(String[] args) {
-		new Experiment1(args).test();
+		new Experiment1(args).run();
 	}
 
 	public Experiment1(String[] classes) {
@@ -41,21 +41,24 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
 		System.out.println("Creating training set in " + trainingSet.getPath());
 		Sampler.sample(TRAINING_SET_SIZE, classNames, sampleCount, trainingSet);
-		
+
 		File output = trainAndClassify(trainingSet, 0);
 
 		// This list simulates the entries that would have been manually reviewed:
-		List<Element> reviewedEntries = new ArrayList<Element>();
-		// This file will contain a copy of these entries:
-		File reviewFile;
+		List<Element> reviewedEntries = new ArrayList<Element>();;
 
 		for (int i = 1; i <= ITERATIONS; i++) {
 			System.out.println();
 			System.out.println("[ Iteration " + i + " ]");
 
-			reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
+			List<ClassifierResult> newlyReviewedEntries = getBottomN(output, classCount * 5);
+			reviewedEntries.addAll(newlyReviewedEntries);
+			System.out.println(newlyReviewedEntries.size() + " samples were reviewed this iteration.");
+			System.out.println(
+					"This brings the total to " + reviewedEntries + " samples that will be added to the training set");
+
+			File reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
 			System.out.println("Creating review file in " + trainingSet.getPath());
-			reviewedEntries.addAll(getBottomN(output, classCount * 5));
 			outputSamples(reviewedEntries, reviewFile); // This is just for illustration purposes
 
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
@@ -63,15 +66,10 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			outputSamples(reviewedEntries, trainingSet);
 			int remainingSamples = TRAINING_SET_SIZE + Math.floorDiv(-reviewedEntries.size(), classCount);
 			Sampler.sample(remainingSamples, classNames, sampleCount, trainingSet);
+
 			output = trainAndClassify(trainingSet, i);
 		}
 
-	}
-
-	public void test() {
-		File output = new File(DATA_DIR, getFileName("Iteration", "0", "Output"));
-		File confMatrix = new File(DATA_DIR, getFileName("Iteration", "0", "ConfMtx"));
-		outputConfMatrix(output, confMatrix);
 	}
 
 	private File trainAndClassify(File input, Integer iter) {
@@ -89,7 +87,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		File confMatrix = getEmptyFile(DATA_DIR, "Iteration", iter.toString(), "ConfusionMatrix");
 		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
 		outputConfMatrix(output, confMatrix);
-		
+
 		System.out.println("Deleting Classifier " + classifier.getName());
 		classifier.delete();
 
