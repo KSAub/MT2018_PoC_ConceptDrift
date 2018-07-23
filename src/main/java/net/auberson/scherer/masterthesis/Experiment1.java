@@ -45,7 +45,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		File output = trainAndClassify(trainingSet, 0);
 
 		// This list simulates the entries that would have been manually reviewed:
-		List<Element> reviewedEntries = new ArrayList<Element>();;
+		List<Element> reviewedEntries = new ArrayList<Element>();
 
 		for (int i = 1; i <= ITERATIONS; i++) {
 			System.out.println();
