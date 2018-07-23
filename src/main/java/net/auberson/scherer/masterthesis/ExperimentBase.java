@@ -19,6 +19,8 @@ import com.ibm.watson.developer_cloud.natural_language_classifier.v1.NaturalLang
 
 import net.auberson.scherer.masterthesis.model.ClassifierResult;
 import net.auberson.scherer.masterthesis.model.Element;
+import net.auberson.scherer.masterthesis.model.StatisticsCounter;
+import net.auberson.scherer.masterthesis.model.StatisticsResults;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
 import net.auberson.scherer.masterthesis.util.IOUtil;
 import net.auberson.scherer.masterthesis.util.NLCProperties;
@@ -231,14 +233,73 @@ public class ExperimentBase {
 		IOUtil.close(out);
 		IOUtil.close(inputCsv);
 	}
-	
 
 	/**
 	 * Updates global and class-specific statistics files
+	 * 
+	 * @param trainingSetSize
+	 * @param iter
+	 * @param reviewedItemsCount
+	 * @param testSetSize
 	 */
-	protected void updateStats(File results) {
+	protected void updateStats(File results, File outputDir, Integer iter, int trainingSetSize, int testSetSize,
+			int reviewedItemsCount) {
+		outputDir.getParentFile().mkdirs();
 		CSVParser inputCsv = IOUtil.openCSV(results);
-		
-		
+
+		// Initialize empty structure to count tn, tp, fn, fp
+		List<StatisticsCounter> counters = new ArrayList<StatisticsCounter>(classCount);
+		for (String className : classNames) {
+			counters.add(new StatisticsCounter(className));
+		}
+
+		// Iterate through all result records, and update the counters
+		for (CSVRecord csvRecord : inputCsv) {
+			final String actualClass = csvRecord.get(1).trim();
+			final String detectedClass = csvRecord.get(2).trim();
+
+			// Update each statistics object
+			for (StatisticsCounter counter : counters) {
+				counter.update(actualClass, detectedClass);
+			}
+		}
+		IOUtil.close(inputCsv);
+
+		// Calculate statistics and update the stats files
+		for (StatisticsCounter counter : counters) {
+			File file = new File(outputDir, getFileName("Stats", capitalize(counter.getClassLabel())));
+			PrintWriter out = IOUtil.getAppendingWriter(file);
+			StatisticsResults stats = new StatisticsResults(counter);
+			stats.output(out, iter, trainingSetSize, testSetSize, reviewedItemsCount);
+			IOUtil.close(out);
+		}
+
+		// Update global statistics file
+		File file = new File(outputDir, getFileName("Stats"));
+		PrintWriter out = IOUtil.getAppendingWriter(file);
+		StatisticsResults stats = StatisticsResults.aggregate(counters);
+		stats.output(out, iter, trainingSetSize, testSetSize, reviewedItemsCount);
+		IOUtil.close(out);
+	}
+
+	/**
+	 * Empties global and class-specific statistics files, ensures the files exist
+	 * for appending
+	 */
+	protected void clearStats(File outputDir) {
+		for (String className : classNames) {
+			File file = getEmptyFile(outputDir, "Stats", capitalize(className));
+			PrintWriter out = IOUtil.getAppendingWriter(file);
+			StatisticsResults.outputHeader(out);
+			IOUtil.close(out);
+		}
+		File file = getEmptyFile(outputDir, "Stats");
+		PrintWriter out = IOUtil.getAppendingWriter(file);
+		StatisticsResults.outputHeader(out);
+		IOUtil.close(out);
+	}
+
+	private String capitalize(String input) {
+		return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
 	}
 }

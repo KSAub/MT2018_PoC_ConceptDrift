@@ -14,7 +14,8 @@ import net.auberson.scherer.masterthesis.util.Sampler;
  */
 public class Experiment1 extends ExperimentBase implements Runnable {
 
-	public static final File DATA_DIR = new File("./data/processed/ex1");
+	public static final File DATA_DIR = new File("./data/processed/experiment1");
+	public static final File REPORTS_DIR = new File("./reports/experiment1");
 
 	private static final int TRAINING_SET_SIZE = 150;
 	private static final int TEST_SET_SIZE = 600;
@@ -38,6 +39,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	public void run() {
 		System.out.println();
 		System.out.println("[ Initial Iteration ]");
+		clearStats(REPORTS_DIR);
 
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
 		System.out.println("Creating training set in " + trainingSet.getPath());
@@ -46,7 +48,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		System.out.println("Creating test set in " + testSet.getPath());
 
 		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNames, sampleCount, trainingSet, testSet);
-		File output = trainAndClassify(trainingSet, testSet, TRAINING_SET_SIZE, 0);
+		File output = trainAndClassify(trainingSet, testSet, TRAINING_SET_SIZE, TEST_SET_SIZE, 0, 0);
 
 		// This list simulates the entries that would have been manually reviewed:
 		List<Element> reviewedEntries = new ArrayList<Element>();
@@ -76,7 +78,8 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 
 			Sampler.sample(new int[] { missingTrainingSetSample, TEST_SET_SIZE }, classNames, sampleCount, trainingSet,
 					testSet);
-			output = trainAndClassify(trainingSet, testSet, reviewedEntries.size() + missingTrainingSetSample, i);
+			output = trainAndClassify(trainingSet, testSet, reviewedEntries.size() + missingTrainingSetSample,
+					TEST_SET_SIZE, reviewedEntries.size(), i);
 		}
 
 	}
@@ -85,7 +88,8 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	 * Trains a classifier, evaluates the test set, updates statistics files, and
 	 * returns the files containing the results from the test set evaluation.
 	 */
-	private File trainAndClassify(File trainingSet, File testSet, int trainingSetSize, Integer iter) {
+	private File trainAndClassify(File trainingSet, File testSet, int trainingSetSize, int testSetSize,
+			int reviewedItemsCount, Integer iter) {
 		System.out.println("Training Classifier with " + trainingSetSize + " samples");
 		BatchClassifier classifier = trainClassifier(trainingSet, "Ex1", "Iteration" + iter.toString());
 
@@ -98,8 +102,8 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		outputConfMatrix(output, confMatrix);
 
 		System.out.println("Updating statistics files");
-		updateStats(output);
-		
+		updateStats(output, REPORTS_DIR, iter, trainingSetSize, testSetSize, reviewedItemsCount);
+
 		System.out.println("Deleting Classifier " + classifier.getName());
 		classifier.delete();
 
