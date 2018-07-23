@@ -43,6 +43,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		System.out.println("Creating training set in " + trainingSet.getPath());
 		Sampler.sample(TRAINING_SET_SIZE, classNames, sampleCount, trainingSet);
 
+		System.out.println("Training initial Classifier with " + TRAINING_SET_SIZE + " samples");
 		File output = trainAndClassify(trainingSet, 0);
 
 		// This list simulates the entries that would have been manually reviewed:
@@ -69,13 +70,13 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			remainingSamples = Math.max(remainingSamples, 0);
 			Sampler.sample(remainingSamples, classNames, sampleCount, trainingSet);
 
+			System.out.println("Training Classifier with " + reviewedEntries.size()+remainingSamples + " samples");
 			output = trainAndClassify(trainingSet, i);
 		}
 
 	}
 
 	private File trainAndClassify(File input, Integer iter) {
-		System.out.println("Training Classifier with " + TRAINING_SET_SIZE + " samples");
 		BatchClassifier classifier = trainClassifier(input, "Ex1", "Iteration" + iter.toString());
 
 		File testSet = getEmptyFile(DATA_DIR, "Iteration", iter.toString(), "Test");
