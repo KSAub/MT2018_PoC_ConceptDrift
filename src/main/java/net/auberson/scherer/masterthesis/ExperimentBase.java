@@ -2,7 +2,6 @@ package net.auberson.scherer.masterthesis;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -13,7 +12,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
@@ -22,6 +20,7 @@ import com.ibm.watson.developer_cloud.natural_language_classifier.v1.NaturalLang
 import net.auberson.scherer.masterthesis.model.ClassifierResult;
 import net.auberson.scherer.masterthesis.model.Element;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
+import net.auberson.scherer.masterthesis.util.IOUtil;
 import net.auberson.scherer.masterthesis.util.NLCProperties;
 import net.auberson.scherer.masterthesis.util.Sampler;
 
@@ -137,33 +136,22 @@ public class ExperimentBase {
 	 * @return the N results with the lowest confidence
 	 */
 	protected List<ClassifierResult> getBottomN(File results, int n) {
-		CSVParser inputCsv = null;
-		try {
-			inputCsv = CSVFormat.DEFAULT.parse(new FileReader(results));
-		} catch (IOException e) {
-			System.err.println("Unable to parse the result CSV at '" + results.getAbsolutePath() + "'");
-			e.printStackTrace();
-			System.exit(-1);
-		}
+		CSVParser inputCsv = IOUtil.openCSV(results);
 
 		List<ClassifierResult> resultList = new ArrayList<ClassifierResult>();
 		for (CSVRecord csvRecord : inputCsv) {
 			resultList.add(new ClassifierResult(csvRecord));
 		}
-		try {
-			inputCsv.close();
-		} catch (IOException e) {
-			System.err.println("Unable to close the result CSV at '" + results.getAbsolutePath() + "'");
-			e.printStackTrace();
-		}
 
 		resultList.sort(ClassifierResult.COMPARATOR);
 
+		IOUtil.close(inputCsv);
 		return resultList.subList(0, Math.min(resultList.size(), n));
 	}
 
 	/**
-	 * From a Results CSV file, retrieve the entries with a confidence below a certain threshold
+	 * From a Results CSV file, retrieve the entries with a confidence below a
+	 * certain threshold
 	 * 
 	 * @param results
 	 *            File object pointing to the results file
@@ -172,14 +160,7 @@ public class ExperimentBase {
 	 * @return the N results with the lowest confidence
 	 */
 	protected List<ClassifierResult> getSamplesUnderThreshold(File results, double threshold) {
-		CSVParser inputCsv = null;
-		try {
-			inputCsv = CSVFormat.DEFAULT.parse(new FileReader(results));
-		} catch (IOException e) {
-			System.err.println("Unable to parse the result CSV at '" + results.getAbsolutePath() + "'");
-			e.printStackTrace();
-			System.exit(-1);
-		}
+		CSVParser inputCsv = IOUtil.openCSV(results);
 
 		List<ClassifierResult> resultList = new ArrayList<ClassifierResult>();
 		for (CSVRecord csvRecord : inputCsv) {
@@ -188,19 +169,14 @@ public class ExperimentBase {
 				resultList.add(result);
 			}
 		}
-		try {
-			inputCsv.close();
-		} catch (IOException e) {
-			System.err.println("Unable to close the result CSV at '" + results.getAbsolutePath() + "'");
-			e.printStackTrace();
-		}
 
 		// If we need a list sorted by confidence, do this:
 		// resultList.sort(ClassifierResult.COMPARATOR);
 
+		IOUtil.close(inputCsv);
 		return resultList;
 	}
-	
+
 	/**
 	 * Outputs the samples to the given file as CSV: First column is the text,
 	 * second is the class.
@@ -209,19 +185,12 @@ public class ExperimentBase {
 	 * @param outputFile
 	 */
 	protected void outputSamples(List<Element> samples, File outputFile) {
-		PrintWriter out;
-		try {
-			out = new PrintWriter(outputFile);
-			for (Element sample : samples) {
-				out.print("\"" + sample.getText() + "\", ");
-				out.println(sample.getClassLabel());
-			}
-			out.close();
-		} catch (FileNotFoundException e) {
-			System.err.println("Unable to write samples to dataset CSV at '" + outputFile.getAbsolutePath() + "'");
-			e.printStackTrace();
-			System.exit(-1);
+		PrintWriter out = IOUtil.getWriter(outputFile);
+		for (Element sample : samples) {
+			out.print("\"" + sample.getText() + "\", ");
+			out.println(sample.getClassLabel());
 		}
+		IOUtil.close(out);
 	}
 
 	/**
@@ -231,23 +200,8 @@ public class ExperimentBase {
 	 * @param confMatrix
 	 */
 	protected void outputConfMatrix(File results, File outputFile) {
-		CSVParser inputCsv = null;
-		try {
-			inputCsv = CSVFormat.DEFAULT.parse(new FileReader(results));
-		} catch (IOException e) {
-			System.err.println("Unable to parse the result CSV at '" + results.getAbsolutePath() + "'");
-			e.printStackTrace();
-			System.exit(-1);
-		}
-
-		PrintWriter out = null;
-		try {
-			out = new PrintWriter(outputFile);
-		} catch (FileNotFoundException e) {
-			System.err.println("Unable to write samples to dataset CSV at '" + outputFile.getAbsolutePath() + "'");
-			e.printStackTrace();
-			System.exit(-1);
-		}
+		CSVParser inputCsv = IOUtil.openCSV(results);
+		PrintWriter out = IOUtil.getWriter(outputFile);
 
 		HashMap<String, Integer> headers = new HashMap<String, Integer>();
 		for (int i = 0; i < classCount; i++) {
@@ -274,12 +228,7 @@ public class ExperimentBase {
 			out.println();
 		}
 
-		try {
-			out.close();
-			inputCsv.close();
-		} catch (IOException e) {
-			System.err.println("Unable to close the files.");
-			e.printStackTrace();
-		}
+		IOUtil.close(out);
+		IOUtil.close(inputCsv);
 	}
 }
