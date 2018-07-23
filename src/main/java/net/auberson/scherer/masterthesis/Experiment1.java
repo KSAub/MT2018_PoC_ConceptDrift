@@ -70,7 +70,6 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			remainingSamples = Math.max(remainingSamples, 0);
 			Sampler.sample(remainingSamples, classNames, sampleCount, trainingSet);
 
-			System.out.println("Training Classifier with " + reviewedEntries.size()+remainingSamples + " samples");
 			output = trainAndClassify(trainingSet, i);
 		}
 
