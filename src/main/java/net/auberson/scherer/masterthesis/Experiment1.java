@@ -16,9 +16,10 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 
 	public static final File DATA_DIR = new File("./data/processed/experiment1");
 
-	private static final int TRAINING_SET_SIZE = 150;
+	private static final int TRAINING_SET_SIZE = 10;//150;
 	private static final int TEST_SET_SIZE = 600;
 	private static final int ITERATIONS = 10;
+	private static final double CONFIDENCE_THRESHOLD = 0.8d;
 
 	/**
 	 * Program executable for Experiment 1
@@ -51,7 +52,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			System.out.println();
 			System.out.println("[ Iteration " + i + " ]");
 
-			List<ClassifierResult> newlyReviewedEntries = getBottomN(output, classCount * 5);
+			List<ClassifierResult> newlyReviewedEntries = getSamplesUnderThreshold(output, CONFIDENCE_THRESHOLD);
 			reviewedEntries.addAll(newlyReviewedEntries);
 			System.out.println(newlyReviewedEntries.size() + " samples were reviewed this iteration.");
 			System.out.println(
