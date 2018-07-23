@@ -78,7 +78,7 @@ public class BatchClassifier {
 	 * Classify the contents of a data set, write the results to a CSV file. <br>
 	 * <br>
 	 * The results written to the file are in the following format: <br>
-	 * sample text, expected class, detected class, confidence <br>
+	 * sample text, expected class, detected class 1, confidence 1, detected class 2, confidence 2, etc... <br>
 	 * 
 	 * @param input
 	 *            a File pointing to a CSV with at least 2 columns: Text and Class
@@ -122,17 +122,18 @@ public class BatchClassifier {
 						.execute();
 
 				for (CollectionItem result : results.getCollection()) {
-					// This is the class with the highest confidence:
-					ClassifiedClass classification = result.getClasses().get(0);
-
 					// Output the original text (in quotes)...
 					out.print("\"" + result.getText() + "\", ");
 					// ...the expected value...
-					out.print(batch.expectedValues.get(result.getText()) + ", ");
-					// ...the detected class...
-					out.print(classification.getClassName() + ", ");
-					// ...and the confidence
-					out.print(classification.getConfidence() + ", ");
+					out.print(batch.expectedValues.get(result.getText()));
+					
+					for (ClassifiedClass classification : result.getClasses()) {
+						// ...the detected class (most likely first)...
+						out.print(", " + classification.getClassName());
+						// ...and the confidence
+						out.print(", " + classification.getConfidence());
+					}
+
 					out.println();
 				}
 

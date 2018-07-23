@@ -2,15 +2,23 @@ package net.auberson.scherer.masterthesis;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.NaturalLanguageClassifier;
 
+import net.auberson.scherer.masterthesis.model.Result;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
 import net.auberson.scherer.masterthesis.util.NLCProperties;
 import net.auberson.scherer.masterthesis.util.Sampler;
@@ -112,5 +120,30 @@ public class ExperimentBase {
 			System.exit(-1);
 			return null;
 		}
+	}
+	
+	/**
+	 * From a Results CSV file, retrieve the N entries with the lowest confidence
+	 * @param results File object pointing to the results file
+	 * @param n number of entries to return
+	 * @return the N results with the lowest confidence
+	 */
+	protected List<Result> getBottomN(File results, int n) {
+		CSVParser inputCsv = null;
+		try {
+			inputCsv = CSVFormat.DEFAULT.parse(new FileReader(results));
+		} catch (IOException e) {
+			System.err.println("Unable to parse the result CSV at '" + results.getAbsolutePath() + "'");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+
+		List<Result> resultList = new ArrayList<Result>();
+		for (CSVRecord csvRecord : inputCsv) {
+			resultList.add(new Result(csvRecord));
+		}
+		resultList.sort(Result.COMPARATOR);
+
+		return resultList.subList(0, Math.min(resultList.size(), n));
 	}
 }
