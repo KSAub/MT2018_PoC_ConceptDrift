@@ -231,4 +231,14 @@ public class ExperimentBase {
 		IOUtil.close(out);
 		IOUtil.close(inputCsv);
 	}
+	
+
+	/**
+	 * Updates global and class-specific statistics files
+	 */
+	protected void updateStats(File results) {
+		CSVParser inputCsv = IOUtil.openCSV(results);
+		
+		
+	}
 }

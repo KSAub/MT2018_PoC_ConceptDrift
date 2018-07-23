@@ -41,11 +41,11 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
 		System.out.println("Creating training set in " + trainingSet.getPath());
-		
+
 		File testSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Test");
 		System.out.println("Creating test set in " + testSet.getPath());
-		
-		Sampler.sample(new int[]{TRAINING_SET_SIZE, TEST_SET_SIZE}, classNames, sampleCount, trainingSet, testSet);
+
+		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNames, sampleCount, trainingSet, testSet);
 		File output = trainAndClassify(trainingSet, testSet, TRAINING_SET_SIZE, 0);
 
 		// This list simulates the entries that would have been manually reviewed:
@@ -58,8 +58,8 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			List<ClassifierResult> newlyReviewedEntries = getSamplesUnderThreshold(output, CONFIDENCE_THRESHOLD);
 			reviewedEntries.addAll(newlyReviewedEntries);
 			System.out.println(newlyReviewedEntries.size() + " samples were reviewed this iteration.");
-			System.out.println(
-					"This brings the total to " + reviewedEntries.size() + " samples that will be added to the training set");
+			System.out.println("This brings the total to " + reviewedEntries.size()
+					+ " samples that will be added to the training set");
 
 			File reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
 			System.out.println("Creating review file in " + reviewFile.getPath());
@@ -70,16 +70,21 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			outputSamples(reviewedEntries, trainingSet);
 			int missingTrainingSetSample = TRAINING_SET_SIZE + Math.floorDiv(-reviewedEntries.size(), classCount);
 			missingTrainingSetSample = Math.max(missingTrainingSetSample, 0);
-			
+
 			testSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Test");
 			System.out.println("Creating test set in " + testSet.getPath());
-			
-			Sampler.sample(new int[]{missingTrainingSetSample, TEST_SET_SIZE}, classNames, sampleCount, trainingSet, testSet);
-			output = trainAndClassify(trainingSet, testSet, reviewedEntries.size()+missingTrainingSetSample, i);
+
+			Sampler.sample(new int[] { missingTrainingSetSample, TEST_SET_SIZE }, classNames, sampleCount, trainingSet,
+					testSet);
+			output = trainAndClassify(trainingSet, testSet, reviewedEntries.size() + missingTrainingSetSample, i);
 		}
 
 	}
 
+	/**
+	 * Trains a classifier, evaluates the test set, updates statistics files, and
+	 * returns the files containing the results from the test set evaluation.
+	 */
 	private File trainAndClassify(File trainingSet, File testSet, int trainingSetSize, Integer iter) {
 		System.out.println("Training Classifier with " + trainingSetSize + " samples");
 		BatchClassifier classifier = trainClassifier(trainingSet, "Ex1", "Iteration" + iter.toString());
@@ -92,6 +97,9 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
 		outputConfMatrix(output, confMatrix);
 
+		System.out.println("Updating statistics files");
+		updateStats(output);
+		
 		System.out.println("Deleting Classifier " + classifier.getName());
 		classifier.delete();
 

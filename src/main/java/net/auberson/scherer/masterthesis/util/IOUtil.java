@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -48,6 +49,23 @@ public class IOUtil {
 		}
 	}
 	
+	/**
+	 * Opens a file for output, appending to an existing file instead of overwriting
+	 */
+	public static PrintWriter getAppendingWriter(File file) {
+		try {
+			return new PrintWriter(new FileWriter(file, true));
+		} catch (IOException e) {
+			System.err.println("Unable to open file for output at '" + file.getAbsolutePath() + "'");
+			e.printStackTrace();
+			System.exit(-1);
+			return null;
+		}
+	}
+	
+	/**
+	 * Close any kind of IO resource
+	 */
 	public static void close(Closeable o) {
 		try {
 			o.close();
