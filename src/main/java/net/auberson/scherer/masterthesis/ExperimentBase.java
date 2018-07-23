@@ -163,6 +163,45 @@ public class ExperimentBase {
 	}
 
 	/**
+	 * From a Results CSV file, retrieve the entries with a confidence below a certain threshold
+	 * 
+	 * @param results
+	 *            File object pointing to the results file
+	 * @param n
+	 *            number of entries to return
+	 * @return the N results with the lowest confidence
+	 */
+	protected List<ClassifierResult> getSamplesUnderThreshold(File results, double threshold) {
+		CSVParser inputCsv = null;
+		try {
+			inputCsv = CSVFormat.DEFAULT.parse(new FileReader(results));
+		} catch (IOException e) {
+			System.err.println("Unable to parse the result CSV at '" + results.getAbsolutePath() + "'");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+
+		List<ClassifierResult> resultList = new ArrayList<ClassifierResult>();
+		for (CSVRecord csvRecord : inputCsv) {
+			ClassifierResult result = new ClassifierResult(csvRecord);
+			if (result.getConfidence().doubleValue() < threshold) {
+				resultList.add(result);
+			}
+		}
+		try {
+			inputCsv.close();
+		} catch (IOException e) {
+			System.err.println("Unable to close the result CSV at '" + results.getAbsolutePath() + "'");
+			e.printStackTrace();
+		}
+
+		// If we need a list sorted by confidence, do this:
+		// resultList.sort(ClassifierResult.COMPARATOR);
+
+		return resultList;
+	}
+	
+	/**
 	 * Outputs the samples to the given file as CSV: First column is the text,
 	 * second is the class.
 	 * 
