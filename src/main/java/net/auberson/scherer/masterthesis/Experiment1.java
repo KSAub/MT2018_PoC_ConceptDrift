@@ -16,7 +16,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 
 	public static final File DATA_DIR = new File("./data/processed/experiment1");
 
-	private static final int TRAINING_SET_SIZE = 10;//150;
+	private static final int TRAINING_SET_SIZE = 150;
 	private static final int TEST_SET_SIZE = 600;
 	private static final int ITERATIONS = 10;
 	private static final double CONFIDENCE_THRESHOLD = 0.8d;
@@ -56,16 +56,17 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			reviewedEntries.addAll(newlyReviewedEntries);
 			System.out.println(newlyReviewedEntries.size() + " samples were reviewed this iteration.");
 			System.out.println(
-					"This brings the total to " + reviewedEntries + " samples that will be added to the training set");
+					"This brings the total to " + reviewedEntries.size() + " samples that will be added to the training set");
 
 			File reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
-			System.out.println("Creating review file in " + trainingSet.getPath());
+			System.out.println("Creating review file in " + reviewFile.getPath());
 			outputSamples(reviewedEntries, reviewFile); // This is just for illustration purposes
 
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
 			System.out.println("Creating training set in " + trainingSet.getPath());
 			outputSamples(reviewedEntries, trainingSet);
 			int remainingSamples = TRAINING_SET_SIZE + Math.floorDiv(-reviewedEntries.size(), classCount);
+			remainingSamples = Math.max(remainingSamples, 0);
 			Sampler.sample(remainingSamples, classNames, sampleCount, trainingSet);
 
 			output = trainAndClassify(trainingSet, i);
