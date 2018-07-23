@@ -28,10 +28,33 @@ public class Sampler {
 	private static Random rng = new Random();
 
 	/**
-	 * Creates one or more files with data sampled from the
+	 * Creates a file with data sampled from the intermediary data sets
 	 * 
 	 * @param sampleSize
-	 *            the total size of each data set file
+	 *            the size of the data set file
+	 * @param classNames
+	 *            the names of the classes from which to get samples. The
+	 *            corresponding CSVs must exist under
+	 *            <code>./data/intermediate</code>
+	 * @param classSampleCounts
+	 *            a map containing the number of samples available for each class
+	 *            specified (you can get this using
+	 *            <code>Sampler.getSampleCount(classNames);</code>)
+	 * @param targets
+	 *            the file in which to write the samples
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public static void sample(int sampleSize, Collection<String> classNames, Map<String, Integer> classSampleCounts,
+			File target) {
+		sample(new int[] {sampleSize}, classNames, classSampleCounts, target);
+	}
+	
+	/**
+	 * Creates one or more files with data sampled from the intermediary data sets
+	 * 
+	 * @param sampleSizes
+	 *            the sizes of each data set file
 	 * @param classNames
 	 *            the names of the classes from which to get samples. The
 	 *            corresponding CSVs must exist under
@@ -45,7 +68,7 @@ public class Sampler {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public static void sample(int sampleSize, Collection<String> classNames, Map<String, Integer> classSampleCounts,
+	public static void sample(int[] sampleSizes, Collection<String> classNames, Map<String, Integer> classSampleCounts,
 			File... targets) {
 		int targetCount = targets.length;
 
@@ -56,14 +79,19 @@ public class Sampler {
 				out[i] = new PrintWriter(targets[i]);
 			}
 
+			int totalSampleCount = 0;
+			for (int sampleSize : sampleSizes) {
+				totalSampleCount += sampleSize;
+			}
+			
 			for (String className : classNames) {
 				int classSampleCount = classSampleCounts.get(className);
-				if (classSampleCount < sampleSize * targetCount) {
+				if (classSampleCount < totalSampleCount) {
 					throw new IllegalArgumentException("Only " + classSampleCount + " exist for class '" + className
-							+ "', not enough to pick " + (sampleSize * targetCount) + " samples.");
+							+ "', not enough to pick " + totalSampleCount + " samples.");
 				}
 				List<Integer> sampledLines = sampleRandomNumbersWithoutRepetition(0, classSampleCount - 1,
-						sampleSize * targetCount);
+						totalSampleCount);
 
 				// Open input file
 				FileInputStream in = new FileInputStream(Project.getDataFile(className));
