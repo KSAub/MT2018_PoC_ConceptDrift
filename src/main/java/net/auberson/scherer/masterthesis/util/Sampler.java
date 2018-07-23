@@ -48,9 +48,9 @@ public class Sampler {
 	 */
 	public static void sample(int sampleSize, Collection<String> classNames, Map<String, Integer> classSampleCounts,
 			File target) {
-		sample(new int[] {sampleSize}, classNames, classSampleCounts, target);
+		sample(new int[] { sampleSize }, classNames, classSampleCounts, target);
 	}
-	
+
 	/**
 	 * Creates one or more files with data sampled from the intermediary data sets
 	 * 
@@ -71,10 +71,9 @@ public class Sampler {
 	 */
 	public static void sample(int[] sampleSizes, Collection<String> classNames, Map<String, Integer> classSampleCounts,
 			File... targets) {
-		int targetCount = targets.length;
 
-		// Open output files
 		try {
+			// Open output files
 			PrintWriter out[] = new PrintWriter[targets.length];
 			for (int i = 0; i < targets.length; i++) {
 				// Append to the samples file
@@ -82,10 +81,12 @@ public class Sampler {
 			}
 
 			int totalSampleCount = 0;
+			int maxSampleSize = 0;
 			for (int sampleSize : sampleSizes) {
 				totalSampleCount += sampleSize;
+				maxSampleSize = Math.max(maxSampleSize, sampleSize);
 			}
-			
+
 			for (String className : classNames) {
 				int classSampleCount = classSampleCounts.get(className);
 				if (classSampleCount < totalSampleCount) {
@@ -100,15 +101,21 @@ public class Sampler {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
 				int lineNumber = 0;
-				int lineCount = 0;
-				while (!sampledLines.isEmpty()) {
-					while (sampledLines.get(0).intValue() > lineNumber++) {
-						reader.readLine();
+				for (int sampleNr = 0; sampleNr < maxSampleSize; sampleNr++) {
+					for (int i = 0; i < out.length; i++) {
+						// Check whether this writer needs one more sample
+						if (sampleSizes[i] > sampleNr) {
+							// If yes, skip to next sample
+							while (sampledLines.get(0).intValue() > lineNumber++) {
+								reader.readLine();
+							}
+							sampledLines.remove(0);
+							// And add the content of this sample to the writer
+							String readLine = reader.readLine();
+							assert (!readLine.isEmpty());
+							out[i].println(readLine);
+						}
 					}
-					sampledLines.remove(0);
-					String readLine = reader.readLine();
-					assert (!readLine.isEmpty());
-					out[lineCount++ % targetCount].println(readLine);
 				}
 				// Close the input file
 				reader.close();
