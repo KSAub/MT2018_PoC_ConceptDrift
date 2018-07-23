@@ -223,7 +223,7 @@ public class ExperimentBase {
 			final int actualClass = headers.get(csvRecord.get(1).trim()).intValue();
 			final int detectedClass = headers.get(csvRecord.get(2).trim()).intValue();
 
-			matrix[actualClass][detectedClass]++;
+			matrix[detectedClass][actualClass]++;
 		}
 
 		for (int i = 0; i < matrix.length; i++) {
