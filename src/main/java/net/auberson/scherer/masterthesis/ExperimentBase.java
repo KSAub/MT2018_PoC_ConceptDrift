@@ -191,7 +191,7 @@ public class ExperimentBase {
 	 * @param results
 	 * @param confMatrix
 	 */
-	protected void outputConfMatrix(File results, File confMatrix) {
+	protected void outputConfMatrix(File results, File outputFile) {
 		CSVParser inputCsv = null;
 		try {
 			inputCsv = CSVFormat.DEFAULT.parse(new FileReader(results));
@@ -201,23 +201,45 @@ public class ExperimentBase {
 			System.exit(-1);
 		}
 
+		PrintWriter out = null;
+		try {
+			out = new PrintWriter(outputFile);
+		} catch (FileNotFoundException e) {
+			System.err.println("Unable to write samples to dataset CSV at '" + outputFile.getAbsolutePath() + "'");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+
 		HashMap<String, Integer> headers = new HashMap<String, Integer>();
 		for (int i = 0; i < classCount; i++) {
-			headers.put(classNames.get(i), i);
+			final String classLabel = classNames.get(i);
+			headers.put(classLabel, i);
+			out.print(", " + classLabel);
 		}
+		out.println();
 
 		int[][] matrix = new int[classCount][classCount];
 		for (CSVRecord csvRecord : inputCsv) {
-			final int actualClass = headers.get(csvRecord.get(1)).intValue();
-			final int detectedClass = headers.get(csvRecord.get(2)).intValue();
+			final int actualClass = headers.get(csvRecord.get(1).trim()).intValue();
+			final int detectedClass = headers.get(csvRecord.get(2).trim()).intValue();
 
 			matrix[actualClass][detectedClass]++;
 		}
 
+		for (int i = 0; i < matrix.length; i++) {
+			out.print(classNames.get(i));
+			for (int j = 0; j < matrix[i].length; j++) {
+				out.print(", ");
+				out.print(matrix[i][j]);
+			}
+			out.println();
+		}
+
 		try {
+			out.close();
 			inputCsv.close();
 		} catch (IOException e) {
-			System.err.println("Unable to close the result CSV at '" + results.getAbsolutePath() + "'");
+			System.err.println("Unable to close the files.");
 			e.printStackTrace();
 		}
 	}
