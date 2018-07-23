@@ -68,6 +68,12 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 
 	}
 
+	public void test() {
+		File output = new File(DATA_DIR, getFileName("Iteration", "0", "Output"));
+		File confMatrix = new File(DATA_DIR, getFileName("Iteration", "0", "ConfMtx"));
+		outputConfMatrix(output, confMatrix);
+	}
+
 	private File trainAndClassify(File input, Integer iter) {
 		System.out.println("Training Classifier with " + TRAINING_SET_SIZE + " samples");
 		BatchClassifier classifier = trainClassifier(input, "Ex1", "Iteration" + iter.toString());
@@ -82,6 +88,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 
 		File confMatrix = getEmptyFile(DATA_DIR, "Iteration", iter.toString(), "ConfusionMatrix");
 		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
+		outputConfMatrix(output, confMatrix);
 		
 		System.out.println("Deleting Classifier " + classifier.getName());
 		classifier.delete();

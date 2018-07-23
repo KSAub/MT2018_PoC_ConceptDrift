@@ -185,4 +185,40 @@ public class ExperimentBase {
 		}
 	}
 
+	/**
+	 * Calculate a confusion matrix for the specified results CSV
+	 * 
+	 * @param results
+	 * @param confMatrix
+	 */
+	protected void outputConfMatrix(File results, File confMatrix) {
+		CSVParser inputCsv = null;
+		try {
+			inputCsv = CSVFormat.DEFAULT.parse(new FileReader(results));
+		} catch (IOException e) {
+			System.err.println("Unable to parse the result CSV at '" + results.getAbsolutePath() + "'");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+
+		HashMap<String, Integer> headers = new HashMap<String, Integer>();
+		for (int i = 0; i < classCount; i++) {
+			headers.put(classNames.get(i), i);
+		}
+
+		int[][] matrix = new int[classCount][classCount];
+		for (CSVRecord csvRecord : inputCsv) {
+			final int actualClass = headers.get(csvRecord.get(1)).intValue();
+			final int detectedClass = headers.get(csvRecord.get(2)).intValue();
+
+			matrix[actualClass][detectedClass]++;
+		}
+
+		try {
+			inputCsv.close();
+		} catch (IOException e) {
+			System.err.println("Unable to close the result CSV at '" + results.getAbsolutePath() + "'");
+			e.printStackTrace();
+		}
+	}
 }
