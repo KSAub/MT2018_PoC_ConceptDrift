@@ -6,6 +6,11 @@ cd "$(dirname "$0")"
 
 case $1 in
 	
+	nightly)
+    $0 experiment1 electronics gaming security travel cooking
+    $0 experiment2 electronics gaming security travel cooking pets
+    ;;
+	
     extract)
     java -classpath "./target/MasterThesisKSA.jar" -Xmx4G -XX:+UseParallelGC -XX:-UseGCOverheadLimit -DentityExpansionLimit=0 -DtotalEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 net.auberson.scherer.masterthesis.Extract
     ;;
@@ -42,7 +47,7 @@ case $1 in
     echo "    Runs the first experiment, storing the data files in "
     echo "    ./data/experiment1 and the reports in ./reports/experiment1 "
     echo "- Run second experiment: $0 experiment2 <categories>"
-    echo "    E.g. $0 experiment1 electronics gaming security travel cooking pets"
+    echo "    E.g. $0 experiment2 electronics gaming security travel cooking pets"
     echo "    Runs the second experiment, where the last class will not be used for
     echo "    initial training, storing the data files in ./data/experiment2 and the 
     echo "    reports in ./reports/experiment2 "
