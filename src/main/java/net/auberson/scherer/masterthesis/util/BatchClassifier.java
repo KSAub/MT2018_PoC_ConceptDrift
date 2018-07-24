@@ -78,7 +78,8 @@ public class BatchClassifier {
 	 * Classify the contents of a data set, write the results to a CSV file. <br>
 	 * <br>
 	 * The results written to the file are in the following format: <br>
-	 * sample text, expected class, detected class 1, confidence 1, detected class 2, confidence 2, etc... <br>
+	 * sample text, expected class, detected class 1, confidence 1, detected class
+	 * 2, confidence 2, etc... <br>
 	 * 
 	 * @param input
 	 *            a File pointing to a CSV with at least 2 columns: Text and Class
@@ -118,15 +119,14 @@ public class BatchClassifier {
 
 			if (batch.isFull() || !inputCsv.hasNext()) {
 
-				ClassificationCollection results = service.classifyCollection(batch.getClassifyCollectionOptions())
-						.execute();
+				ClassificationCollection results = classifyBatch(batch, 5);
 
 				for (CollectionItem result : results.getCollection()) {
 					// Output the original text (in quotes)...
 					out.print("\"" + result.getText() + "\", ");
 					// ...the expected value...
 					out.print(batch.expectedValues.get(result.getText()));
-					
+
 					for (ClassifiedClass classification : result.getClasses()) {
 						// ...the detected class (most likely first)...
 						out.print(", " + classification.getClassName());
@@ -184,8 +184,7 @@ public class BatchClassifier {
 		int incorrect = 0;
 
 		for (Batch batch : allBatches) {
-			ClassificationCollection results = service.classifyCollection(batch.getClassifyCollectionOptions())
-					.execute();
+			ClassificationCollection results = classifyBatch(batch, 5);
 			for (CollectionItem result : results.getCollection()) {
 				String expected = batch.expectedValues.get(result.getText());
 				String returned = result.getTopClass();
@@ -249,6 +248,20 @@ public class BatchClassifier {
 		return null;
 	}
 
+	
+	private ClassificationCollection classifyBatch(Batch batch, int retries) {
+		while (true) {
+			try {
+				return service.classifyCollection(batch.getClassifyCollectionOptions()).execute();
+			} catch (RuntimeException e) {
+				System.err.println(e.toString());
+				if (--retries == 0) {
+					throw e;
+				}
+			}
+		}
+	}
+
 	/**
 	 * Causes the underlying classifier to be deleted from the IBM Cloud. This
 	 * object cannot be used afterwards.
@@ -260,7 +273,7 @@ public class BatchClassifier {
 	public String getName() {
 		return classifier.getName();
 	}
-	
+
 	@Override
 	public String toString() {
 		return classifier.toString();
