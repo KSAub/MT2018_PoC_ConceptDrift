@@ -186,7 +186,7 @@ public class ExperimentBase {
 	 * @param samples
 	 * @param outputFile
 	 */
-	protected void outputSamples(List<Element> samples, File outputFile) {
+	protected void outputSamples(List<? extends Element> samples, File outputFile) {
 		PrintWriter out = IOUtil.getWriter(outputFile);
 		for (Element sample : samples) {
 			out.print("\"" + sample.getText() + "\", ");

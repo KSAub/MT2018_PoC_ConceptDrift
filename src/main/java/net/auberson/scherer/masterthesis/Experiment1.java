@@ -1,11 +1,9 @@
 package net.auberson.scherer.masterthesis;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import net.auberson.scherer.masterthesis.model.ClassifierResult;
-import net.auberson.scherer.masterthesis.model.Element;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
 import net.auberson.scherer.masterthesis.util.Sampler;
 
@@ -47,21 +45,19 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		File testSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Test");
 		System.out.println("Creating test set in " + testSet.getPath());
 
-		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNames, sampleCount, trainingSet, testSet);
-		File output = trainAndClassify(trainingSet, testSet, TRAINING_SET_SIZE, TEST_SET_SIZE, 0, 0);
+		int trainingSetSize = TRAINING_SET_SIZE * classCount; // Just for display
+		int testSetSize = TEST_SET_SIZE * classCount; // Just for display
 
-		// This list simulates the entries that would have been manually reviewed:
-		List<Element> reviewedEntries = new ArrayList<Element>();
+		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNames, sampleCount, trainingSet, testSet);
+		File output = trainAndClassify(trainingSet, testSet, trainingSetSize, testSetSize, 0, 0);
 
 		for (int i = 1; i <= ITERATIONS; i++) {
 			System.out.println();
 			System.out.println("[ Iteration " + i + " ]");
 
-			List<ClassifierResult> newlyReviewedEntries = getSamplesUnderThreshold(output, CONFIDENCE_THRESHOLD);
-			reviewedEntries.addAll(newlyReviewedEntries);
-			System.out.println(newlyReviewedEntries.size() + " samples were reviewed this iteration.");
-			System.out.println("This brings the total to " + reviewedEntries.size()
-					+ " samples that will be added to the training set");
+			// This list simulates the entries that would have been manually reviewed:
+			List<ClassifierResult> reviewedEntries = getSamplesUnderThreshold(output, CONFIDENCE_THRESHOLD);
+			System.out.println(reviewedEntries.size() + " samples were reviewed this iteration.");
 
 			File reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
 			System.out.println("Creating review file in " + reviewFile.getPath());
@@ -70,16 +66,17 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
 			System.out.println("Creating training set in " + trainingSet.getPath());
 			outputSamples(reviewedEntries, trainingSet);
-			int missingTrainingSetSample = TRAINING_SET_SIZE + Math.floorDiv(-reviewedEntries.size(), classCount);
-			missingTrainingSetSample = Math.max(missingTrainingSetSample, 0);
+			int samplesCountToAdd = (TRAINING_SET_SIZE * classCount) - reviewedEntries.size();
+			samplesCountToAdd = Math.max(samplesCountToAdd, 0);
 
 			testSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Test");
 			System.out.println("Creating test set in " + testSet.getPath());
 
-			Sampler.sample(new int[] { missingTrainingSetSample, TEST_SET_SIZE }, classNames, sampleCount, trainingSet,
+			trainingSetSize = reviewedEntries.size() + samplesCountToAdd;
+
+			Sampler.sample(new int[] { samplesCountToAdd / classCount, TEST_SET_SIZE }, classNames, sampleCount, trainingSet,
 					testSet);
-			output = trainAndClassify(trainingSet, testSet, reviewedEntries.size() + missingTrainingSetSample,
-					TEST_SET_SIZE, reviewedEntries.size(), i);
+			output = trainAndClassify(trainingSet, testSet, trainingSetSize, testSetSize, reviewedEntries.size(), i);
 		}
 
 	}
