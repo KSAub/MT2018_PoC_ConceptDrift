@@ -34,6 +34,13 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		super(classes, Math.max(TRAINING_SET_SIZE, TEST_SET_SIZE));
 	}
 
+//	public void test() {
+//		File output = new File("./data/processed/experiment1-old_fullIteration/Iteration5Output-electronics-gaming-security-travel-cooking.csv");
+//		File dir = new File("./reports/experiment1_old_fullIteration");
+//		
+//		updateStats(output, dir, 5, 915, 600, 915);
+//	}
+
 	public void run() {
 		System.out.println();
 		System.out.println("[ Initial Iteration ]");

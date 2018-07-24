@@ -1,0 +1,1 @@
+iteration, trainingSetSize, testSetSize, reviewedItemsCount, tp, fp, fn, tn, tpr, ppv, tnr, bm, acc, err, f1

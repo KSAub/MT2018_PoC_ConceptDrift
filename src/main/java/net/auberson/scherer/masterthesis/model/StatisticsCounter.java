@@ -22,17 +22,17 @@ public class StatisticsCounter {
 	}
 
 	public void update(String actualClass, String detectedClass) {
-		if (actualClass.equals(detectedClass)) {
-			if (classLabel.equals(detectedClass)) {
+		if (classLabel.equals(detectedClass)) {
+			if (classLabel.equals(actualClass)) {
 				tp++;
 			} else {
 				fp++;
 			}
 		} else {
-			if (classLabel.equals(detectedClass)) {
-				tn++;
-			} else {
+			if (classLabel.equals(actualClass)) {
 				fn++;
+			} else {
+				tn++;
 			}
 		}
 	}
