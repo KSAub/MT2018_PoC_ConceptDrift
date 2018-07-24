@@ -38,7 +38,8 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		clearStats(REPORTS_DIR);
 
 		// Initial Training
-		// Remove the last class before training
+		// Remove the last class before training, train and test using all but the last
+		// class
 		System.out.println();
 		System.out.println("[ Iteration 0: Initial Training ]");
 
@@ -71,7 +72,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		updateStats(output, REPORTS_DIR, 0, trainingSetSize, testSetSize, 0);
 
 		// Initial iteration:
-		// No retraining, test on all classes
+		// No retraining, test using all classes
 		System.out.println();
 		System.out.println("[ Iteration 0a: Test with all classes ]");
 
@@ -95,6 +96,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		testSetSize = TEST_SET_SIZE * classCount;
 		updateStats(output, REPORTS_DIR, "0a", trainingSetSize, testSetSize, 0);
 
+		// Retrain a number of times, using the classes with the least confidence
 		for (int i = 1; i <= ITERATIONS; i++) {
 			System.out.println();
 			System.out.println("[ Iteration " + i + " ]");
