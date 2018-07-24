@@ -71,6 +71,10 @@
 						<goals>
 							<goal>shade</goal>
 						</goals>
+						<configuration>
+							<outputFile>target/MasterThesisKSA.jar</outputFile>
+							<shadedArtifactAttached>false</shadedArtifactAttached>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
