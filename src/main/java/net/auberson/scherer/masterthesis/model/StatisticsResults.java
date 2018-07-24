@@ -75,7 +75,7 @@ public class StatisticsResults {
 				+ ppv + ", tnr=" + tnr + ", bm=" + bm + ", acc=" + acc + ", err=" + err + ", f1=" + f1 + "]";
 	}
 
-	public void output(PrintWriter out, Integer iter, int trainingSetSize, int testSetSize, int reviewedItemsCount) {
+	public void output(PrintWriter out, Object iter, int trainingSetSize, int testSetSize, int reviewedItemsCount) {
 		out.println(iter + ", " + trainingSetSize + ", " + testSetSize + ", " + reviewedItemsCount + ", " + tp + ", "
 				+ fp + ", " + fn + ", " + tn + ", " + tpr + ", " + ppv + ", " + tnr + ", " + bm + ", " + acc + ", "
 				+ err + ", " + f1);

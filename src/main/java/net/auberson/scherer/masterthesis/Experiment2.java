@@ -8,14 +8,12 @@ import net.auberson.scherer.masterthesis.util.BatchClassifier;
 import net.auberson.scherer.masterthesis.util.Sampler;
 
 /**
- * Executable for first experiment. This looks at whether selecting the test set
- * results with the lowest confidence, and adding them to the training set,
- * improves classification quality.
+ * Executable for second experiment
  */
-public class Experiment1 extends ExperimentBase implements Runnable {
+public class Experiment2 extends ExperimentBase implements Runnable {
 
-	public static final File DATA_DIR = new File("./data/processed/experiment1");
-	public static final File REPORTS_DIR = new File("./reports/experiment1");
+	public static final File DATA_DIR = new File("./data/processed/experiment2");
+	public static final File REPORTS_DIR = new File("./reports/experiment2");
 
 	private static final int TRAINING_SET_SIZE = 150;
 	private static final int TEST_SET_SIZE = 600;
@@ -29,25 +27,23 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	 *            the name of the classes to use for experiment 1, as arguments
 	 */
 	public static void main(String[] args) {
-		new Experiment1(args).run();
+		new Experiment2(args).run();
 	}
 
-	public Experiment1(String[] classes) {
+	public Experiment2(String[] classes) {
 		super(classes, Math.max(TRAINING_SET_SIZE, TEST_SET_SIZE));
 	}
 
-	// public void test() {
-	// File output = new
-	// File("./data/processed/experiment1-old_fullIteration/Iteration5Output-electronics-gaming-security-travel-cooking.csv");
-	// File dir = new File("./reports/experiment1_old_fullIteration");
-	//
-	// updateStats(output, dir, 5, 915, 600, 915);
-	// }
-
 	public void run() {
-		System.out.println();
-		System.out.println("[ Initial Iteration ]");
 		clearStats(REPORTS_DIR);
+
+		// Initial Training
+		// Remove the last class before training
+		System.out.println();
+		System.out.println("[ Iteration 0: Initial Training ]");
+
+		int initialClassCount = classCount - 1;
+		List<String> initialClassNames = classNames.subList(0, initialClassCount - 1);
 
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
 		System.out.println("Creating training set in " + trainingSet.getPath());
@@ -55,11 +51,49 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		File testSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Test");
 		System.out.println("Creating test set in " + testSet.getPath());
 
-		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNames, sampleCount, trainingSet, testSet);
-		
-		int trainingSetSize = TRAINING_SET_SIZE * classCount; // Just for display
-		int testSetSize = TEST_SET_SIZE * classCount; // Just for display
-		File output = trainAndClassify(trainingSet, testSet, trainingSetSize, testSetSize, 0, 0);
+		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, initialClassNames, sampleCount, trainingSet,
+				testSet);
+
+		System.out.println("Training Classifier with " + TRAINING_SET_SIZE * initialClassCount + " samples");
+		BatchClassifier classifier = trainClassifier(trainingSet, "Ex2", "Iteration0");
+
+		File output = getEmptyFile(DATA_DIR, "Iteration0Output");
+		System.out.println("Classifying test set into " + output.getPath());
+		classifier.classify(testSet, output);
+
+		File confMatrix = getEmptyFile(DATA_DIR, "Iteration0ConfusionMatrix");
+		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
+		outputConfMatrix(output, confMatrix);
+
+		System.out.println("Updating statistics files");
+		int trainingSetSize = TRAINING_SET_SIZE * initialClassCount;
+		int testSetSize = TEST_SET_SIZE * initialClassCount;
+		updateStats(output, REPORTS_DIR, 0, trainingSetSize, testSetSize, 0);
+
+		// Initial iteration:
+		// No retraining, test on all classes
+		System.out.println();
+		System.out.println("[ Iteration 0a: Test with all classes ]");
+
+		testSet = getEmptyFile(DATA_DIR, "Iteration0aTest");
+		System.out.println("Creating test set in " + testSet.getPath());
+		Sampler.sample(TEST_SET_SIZE, classNames, sampleCount, testSet);
+
+		output = getEmptyFile(DATA_DIR, "Iteration0aOutput");
+		System.out.println("Classifying test set into " + output.getPath());
+		classifier.classify(testSet, output);
+
+		System.out.println("Deleting Classifier " + classifier.getName());
+		classifier.delete();
+
+		confMatrix = getEmptyFile(DATA_DIR, "Iteration0aConfusionMatrix");
+		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
+		outputConfMatrix(output, confMatrix);
+
+		System.out.println("Updating statistics files");
+		trainingSetSize = 0;
+		testSetSize = TEST_SET_SIZE * classCount;
+		updateStats(output, REPORTS_DIR, "0a", trainingSetSize, testSetSize, 0);
 
 		for (int i = 1; i <= ITERATIONS; i++) {
 			System.out.println();
@@ -82,10 +116,13 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			testSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Test");
 			System.out.println("Creating test set in " + testSet.getPath());
 
+			trainingSetSize = reviewedEntries.size() + samplesCountToAdd;
+
 			Sampler.sample(new int[] { samplesCountToAdd / classCount, TEST_SET_SIZE }, classNames, sampleCount,
 					trainingSet, testSet);
-			
-			trainingSetSize = reviewedEntries.size() + samplesCountToAdd;
+
+			trainingSetSize = TRAINING_SET_SIZE * classCount;
+			testSetSize = TEST_SET_SIZE * classCount;
 			output = trainAndClassify(trainingSet, testSet, trainingSetSize, testSetSize, reviewedEntries.size(), i);
 		}
 

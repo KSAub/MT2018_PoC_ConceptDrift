@@ -242,7 +242,7 @@ public class ExperimentBase {
 	 * @param reviewedItemsCount
 	 * @param testSetSize
 	 */
-	protected void updateStats(File results, File outputDir, Integer iter, int trainingSetSize, int testSetSize,
+	protected void updateStats(File results, File outputDir, Object iter, int trainingSetSize, int testSetSize,
 			int reviewedItemsCount) {
 		outputDir.getParentFile().mkdirs();
 		CSVParser inputCsv = IOUtil.openCSV(results);
