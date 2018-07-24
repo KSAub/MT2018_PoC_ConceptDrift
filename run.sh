@@ -14,6 +14,11 @@ case $1 in
     java -classpath "./target/*" net.auberson.scherer.masterthesis.ComputeLearningCurve
     ;;
     
+    experiment1)
+    java -classpath "./target/*" net.auberson.scherer.masterthesis.Experiment1
+    ;;
+    
+    
     *)    # unknown command
     echo "USAGE:                                                                         "
     echo "- Extract Dataset: $0 extract"
@@ -26,7 +31,8 @@ case $1 in
     echo "    Trains a classifier for the given categories (the corresponding CSV in "
     echo "    ./data/intermediate must exist) with varying training set sizes, and "
     echo "    outputs the Accuracy for each size to a CSV in ./reports/learning-curve"     
-    
+    echo "- Run first experiment: $0 experiment1 <categories>"
+    echo "    E.g. $0 learningcurve experiment1 gaming security travel cooking"
     ;;
 esac
 
