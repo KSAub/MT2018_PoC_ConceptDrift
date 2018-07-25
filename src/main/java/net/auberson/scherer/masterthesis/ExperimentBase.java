@@ -19,6 +19,7 @@ import com.ibm.watson.developer_cloud.natural_language_classifier.v1.NaturalLang
 
 import net.auberson.scherer.masterthesis.model.ClassifierResult;
 import net.auberson.scherer.masterthesis.model.Element;
+import net.auberson.scherer.masterthesis.model.IncrementableInt;
 import net.auberson.scherer.masterthesis.model.StatisticsCounter;
 import net.auberson.scherer.masterthesis.model.StatisticsResults;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
@@ -128,6 +129,33 @@ public class ExperimentBase {
 		}
 	}
 
+	protected void mergeDataset(File outputFile, int dataSetSize, File... sources) {
+		final Map<String, IncrementableInt> counters = new HashMap<String, IncrementableInt>();
+
+		PrintWriter out = IOUtil.getWriter(outputFile);
+
+		// Initialize counters
+		for (String className : classNames) {
+			counters.put(className, new IncrementableInt());
+		}
+
+		// Copy entry for entry until the dataSetSize for each entry is reached
+		for (File source : sources) {
+			CSVParser inputCsv = IOUtil.openCSV(source);
+			for (CSVRecord csvRecord : inputCsv) {
+				final String classLabel = csvRecord.get(1).trim();
+				if (counters.get(classLabel).lessThan(dataSetSize)) {
+					out.print("\"" + csvRecord.get(0) + "\", ");
+					out.println(classLabel);
+					counters.get(classLabel).inc();
+				}
+			}
+			IOUtil.close(inputCsv);
+		}
+
+		IOUtil.close(out);
+	}
+
 	/**
 	 * From a Results CSV file, retrieve the N entries with the lowest confidence
 	 * 
@@ -196,6 +224,25 @@ public class ExperimentBase {
 	}
 
 	/**
+	 * Outputs the results to the given file as CSV: First column is the text,
+	 * second is the actual class, third the detected class, and fourth the
+	 * confidence.
+	 * 
+	 * @param samples
+	 * @param outputFile
+	 */
+	protected void outputClassifierResult(List<? extends ClassifierResult> results, File outputFile) {
+		PrintWriter out = IOUtil.getWriter(outputFile);
+		for (ClassifierResult result : results) {
+			out.print("\"" + result.getText() + "\", ");
+			out.println(result.getClassLabel() + ", ");
+			out.print(result.getDetectedClassLabel() + ", ");
+			out.println(result.getConfidence());
+		}
+		IOUtil.close(out);
+	}
+
+	/**
 	 * Calculate a confusion matrix for the specified results CSV
 	 * 
 	 * @param results
@@ -242,8 +289,7 @@ public class ExperimentBase {
 	 * @param reviewedItemsCount
 	 * @param testSetSize
 	 */
-	protected void updateStats(File results, File outputDir, Object iter, int trainingSetSize, int testSetSize,
-			int reviewedItemsCount) {
+	protected void updateStats(File results, File outputDir, Object iter, int reviewedItemsCount) {
 		outputDir.getParentFile().mkdirs();
 		CSVParser inputCsv = IOUtil.openCSV(results);
 
@@ -270,7 +316,7 @@ public class ExperimentBase {
 			File file = new File(outputDir, getFileName("Stats", capitalize(counter.getClassLabel())));
 			PrintWriter out = IOUtil.getAppendingWriter(file);
 			StatisticsResults stats = new StatisticsResults(counter);
-			stats.output(out, iter, trainingSetSize, testSetSize, reviewedItemsCount);
+			stats.output(out, iter, reviewedItemsCount);
 			IOUtil.close(out);
 		}
 
@@ -278,7 +324,7 @@ public class ExperimentBase {
 		File file = new File(outputDir, getFileName("Stats"));
 		PrintWriter out = IOUtil.getAppendingWriter(file);
 		StatisticsResults stats = StatisticsResults.aggregate(counters);
-		stats.output(out, iter, trainingSetSize, testSetSize, reviewedItemsCount);
+		stats.output(out, iter, reviewedItemsCount);
 		IOUtil.close(out);
 	}
 

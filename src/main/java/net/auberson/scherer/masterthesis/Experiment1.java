@@ -36,13 +36,15 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		super(classes, Math.max(TRAINING_SET_SIZE, TEST_SET_SIZE));
 	}
 
-	// public void test() {
-	// File output = new
-	// File("./data/processed/experiment1-old_fullIteration/Iteration5Output-electronics-gaming-security-travel-cooking.csv");
-	// File dir = new File("./reports/experiment1_old_fullIteration");
-	//
-	// updateStats(output, dir, 5, 915, 600, 915);
-	// }
+//	public void test() {
+//		File reviewFile = new File(
+//				"./data/processed/experiment1/Iteration10Review-electronics-gaming-security-travel-cooking.csv");
+//		File trainingSet = new File("./data/processed/experiment1/Iteration10Training-electronics-gaming-security-travel-cooking.csv");
+//
+//
+//		File trainingSetMerged = getEmptyFile(DATA_DIR, "Iteration", "10", "TrainingMerged");
+//		mergeDataset(trainingSetMerged, TRAINING_SET_SIZE, reviewFile, trainingSet);
+//	}
 
 	public void run() {
 		System.out.println();
@@ -56,10 +58,8 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		System.out.println("Creating test set in " + testSet.getPath());
 
 		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNames, sampleCount, trainingSet, testSet);
-		
-		int trainingSetSize = TRAINING_SET_SIZE * classCount; // Just for display
-		int testSetSize = TEST_SET_SIZE * classCount; // Just for display
-		File output = trainAndClassify(trainingSet, testSet, trainingSetSize, testSetSize, 0, 0);
+
+		File output = trainAndClassify(trainingSet, testSet, 0, 0);
 
 		for (int i = 1; i <= ITERATIONS; i++) {
 			System.out.println();
@@ -71,22 +71,22 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 
 			File reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
 			System.out.println("Creating review file in " + reviewFile.getPath());
-			outputSamples(reviewedEntries, reviewFile); // This is just for illustration purposes
+			outputClassifierResult(reviewedEntries, reviewFile);
 
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
 			System.out.println("Creating training set in " + trainingSet.getPath());
-			outputSamples(reviewedEntries, trainingSet);
-			int samplesCountToAdd = (TRAINING_SET_SIZE * classCount) - reviewedEntries.size();
-			samplesCountToAdd = Math.max(samplesCountToAdd, 0);
 
 			testSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Test");
 			System.out.println("Creating test set in " + testSet.getPath());
 
-			Sampler.sample(new int[] { samplesCountToAdd / classCount, TEST_SET_SIZE }, classNames, sampleCount,
-					trainingSet, testSet);
-			
-			trainingSetSize = reviewedEntries.size() + samplesCountToAdd;
-			output = trainAndClassify(trainingSet, testSet, trainingSetSize, testSetSize, reviewedEntries.size(), i);
+			Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNames, sampleCount, trainingSet,
+					testSet);
+
+			File trainingSetMerged = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "TrainingMerged");
+			System.out.println("Merging Review file and training set in " + trainingSet.getPath());
+			mergeDataset(trainingSetMerged, TRAINING_SET_SIZE, reviewFile, trainingSet);
+
+			output = trainAndClassify(trainingSetMerged, testSet, reviewedEntries.size(), i);
 		}
 
 	}
@@ -95,9 +95,8 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	 * Trains a classifier, evaluates the test set, updates statistics files, and
 	 * returns the files containing the results from the test set evaluation.
 	 */
-	private File trainAndClassify(File trainingSet, File testSet, int trainingSetSize, int testSetSize,
-			int reviewedItemsCount, Integer iter) {
-		System.out.println("Training Classifier with " + trainingSetSize + " samples");
+	private File trainAndClassify(File trainingSet, File testSet, int reviewedItemsCount, Integer iter) {
+		System.out.println("Training Classifier with " + TRAINING_SET_SIZE + " samples");
 		BatchClassifier classifier = trainClassifier(trainingSet, "Ex1", "Iteration" + iter.toString());
 
 		File output = getEmptyFile(DATA_DIR, "Iteration", iter.toString(), "Output");
@@ -109,7 +108,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		outputConfMatrix(output, confMatrix);
 
 		System.out.println("Updating statistics files");
-		updateStats(output, REPORTS_DIR, iter, trainingSetSize, testSetSize, reviewedItemsCount);
+		updateStats(output, REPORTS_DIR, iter, reviewedItemsCount);
 
 		System.out.println("Deleting Classifier " + classifier.getName());
 		classifier.delete();
