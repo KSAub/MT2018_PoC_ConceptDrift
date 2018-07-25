@@ -44,18 +44,18 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		System.out.println("[ Iteration 0: Initial Training ]");
 
 		int initialClassCount = classCount - 1;
-		List<String> initialClassNames = classNames.subList(0, initialClassCount - 1);
+		List<String> classNamesExceptLast = classNames.subList(0, initialClassCount - 1);
 
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
-		System.out.println("Creating training set in " + trainingSet.getPath());
+		System.out.println("Creating training set (missing a class) in " + trainingSet.getPath());
 
 		File testSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Test");
-		System.out.println("Creating test set in " + testSet.getPath());
+		System.out.println("Creating test set (missing a class) in " + testSet.getPath());
 
-		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, initialClassNames, sampleCount, trainingSet,
+		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNamesExceptLast, sampleCount, trainingSet,
 				testSet);
 
-		System.out.println("Training Classifier with " + TRAINING_SET_SIZE * initialClassCount + " samples");
+		System.out.println("Training Classifier with " + TRAINING_SET_SIZE + " samples per class");
 		BatchClassifier classifier = trainClassifier(trainingSet, "Ex2", "Iteration0");
 
 		File output = getEmptyFile(DATA_DIR, "Iteration0Output");
@@ -105,19 +105,22 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 			System.out.println("Creating review file in " + reviewFile.getPath());
 			outputClassifierResult(reviewedEntries, reviewFile);
 
+			// Create training set missing last class
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
-			System.out.println("Creating training set in " + trainingSet.getPath());
+			System.out.println("Creating training set (missing a class) in " + trainingSet.getPath());
+			Sampler.sample(TRAINING_SET_SIZE, classNamesExceptLast, sampleCount, trainingSet);
 
+			// Create test set including last class
 			testSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Test");
 			System.out.println("Creating test set in " + testSet.getPath());
+			Sampler.sample(TEST_SET_SIZE, classNames, sampleCount, testSet);
 
-			Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNames, sampleCount,
-					trainingSet, testSet);
-
+			// The only examples of the last class known for training are the ones discovered
+			// through review:
 			File trainingSetMerged = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "TrainingMerged");
-			System.out.println("Merging Review file and training set in " + trainingSet.getPath());			
+			System.out.println("Merging Review file and training set in " + trainingSet.getPath());
 			mergeDataset(trainingSetMerged, TRAINING_SET_SIZE, reviewFile, trainingSet);
-			
+
 			output = trainAndClassify(trainingSetMerged, testSet, reviewedEntries.size(), i);
 		}
 
@@ -128,7 +131,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 	 * returns the files containing the results from the test set evaluation.
 	 */
 	private File trainAndClassify(File trainingSet, File testSet, int reviewedItemsCount, Integer iter) {
-		System.out.println("Training Classifier with " + TRAINING_SET_SIZE + " samples");
+		System.out.println("Training Classifier with " + TRAINING_SET_SIZE + " samples per class");
 		BatchClassifier classifier = trainClassifier(trainingSet, "Ex1", "Iteration" + iter.toString());
 
 		File output = getEmptyFile(DATA_DIR, "Iteration", iter.toString(), "Output");

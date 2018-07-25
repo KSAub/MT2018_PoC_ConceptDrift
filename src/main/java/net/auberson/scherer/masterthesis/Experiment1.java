@@ -96,7 +96,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	 * returns the files containing the results from the test set evaluation.
 	 */
 	private File trainAndClassify(File trainingSet, File testSet, int reviewedItemsCount, Integer iter) {
-		System.out.println("Training Classifier with " + TRAINING_SET_SIZE + " samples");
+		System.out.println("Training Classifier with " + TRAINING_SET_SIZE + " samples per class");
 		BatchClassifier classifier = trainClassifier(trainingSet, "Ex1", "Iteration" + iter.toString());
 
 		File output = getEmptyFile(DATA_DIR, "Iteration", iter.toString(), "Output");
