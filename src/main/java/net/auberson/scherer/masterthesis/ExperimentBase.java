@@ -258,30 +258,53 @@ public class ExperimentBase {
 	}
 
 	/**
-	 * Calculate a confusion matrix for the specified results CSV
+	 * Calculate a confusion matrix for the specified results CSV, another for
 	 * 
 	 * @param results
 	 * @param confMatrix
 	 */
-	protected void outputConfMatrix(File results, File outputFile) {
+	protected void outputConfMatrix(File outputDir, File results, double threshold, Object iter) {
+		String threshPercent = Long.toString(Math.round(threshold * 100));
+		File outputFile = getEmptyFile(outputDir, "Iteration", iter.toString(), "ConfMtx");
+		File outputUnder = getEmptyFile(outputDir, "Iteration", iter.toString(), "ConfMtxUnder", threshPercent);
+		File outputOver = getEmptyFile(outputDir, "Iteration", iter.toString(), "ConfMtxOver", threshPercent);
+
 		CSVParser inputCsv = IOUtil.openCSV(results);
-		PrintWriter out = IOUtil.getWriter(outputFile);
 
 		HashMap<String, Integer> headers = new HashMap<String, Integer>();
 		for (int i = 0; i < classCount; i++) {
 			final String classLabel = classNames.get(i);
 			headers.put(classLabel, i);
-			out.print(", " + classLabel);
 		}
-		out.println();
-
 		int[][] matrix = new int[classCount][classCount];
+		int[][] matrixUnder = new int[classCount][classCount];
+		int[][] matrixOver = new int[classCount][classCount];
+
 		for (CSVRecord csvRecord : inputCsv) {
 			final int actualClass = headers.get(csvRecord.get(1).trim()).intValue();
 			final int detectedClass = headers.get(csvRecord.get(2).trim()).intValue();
+			final double confidence = Double.parseDouble(csvRecord.get(3).trim());
 
 			matrix[detectedClass][actualClass]++;
+			if (confidence < threshold) {
+				matrixUnder[detectedClass][actualClass]++;
+			} else {
+				matrixOver[detectedClass][actualClass]++;
+			}
+
 		}
+
+		outputMatrix(outputFile, matrix);
+		outputMatrix(outputUnder, matrixUnder);
+		outputMatrix(outputOver, matrixOver);
+	}
+
+	private void outputMatrix(File outputFile, int[][] matrix) {
+		PrintWriter out = IOUtil.getWriter(outputFile);
+		for (int i = 0; i < classCount; i++) {
+			out.print(", " + classNames.get(i));
+		}
+		out.println();
 
 		for (int i = 0; i < matrix.length; i++) {
 			out.print(classNames.get(i));
@@ -293,7 +316,6 @@ public class ExperimentBase {
 		}
 
 		IOUtil.close(out);
-		IOUtil.close(inputCsv);
 	}
 
 	/**

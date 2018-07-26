@@ -63,9 +63,8 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		System.out.println("Classifying test set into " + output.getPath());
 		classifier.classify(testSet, output);
 
-		File confMatrix = getEmptyFile(DATA_DIR, "Iteration0ConfusionMatrix");
-		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
-		outputConfMatrix(output, confMatrix);
+		System.out.println("Calculating Confusion Matrices");
+		outputConfMatrix(DATA_DIR, output, CONFIDENCE_THRESHOLD, 0);
 
 		System.out.println("Updating statistics files");
 		updateStats(output, REPORTS_DIR, 0, 0);
@@ -86,9 +85,8 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		System.out.println("Deleting Classifier " + classifier.getName());
 		classifier.delete();
 
-		confMatrix = getEmptyFile(DATA_DIR, "Iteration0aConfusionMatrix");
-		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
-		outputConfMatrix(output, confMatrix);
+		System.out.println("Calculating Confusion Matrices");
+		outputConfMatrix(DATA_DIR, output, CONFIDENCE_THRESHOLD, "0a");
 
 		System.out.println("Updating statistics files");
 		updateStats(output, REPORTS_DIR, "0a", 0);
@@ -142,10 +140,9 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		System.out.println("Classifying test set into " + output.getPath());
 		classifier.classify(testSet, output);
 
-		File confMatrix = getEmptyFile(DATA_DIR, "Iteration", iter.toString(), "ConfusionMatrix");
-		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
-		outputConfMatrix(output, confMatrix);
-
+		System.out.println("Calculating Confusion Matrices");
+		outputConfMatrix(DATA_DIR, output, CONFIDENCE_THRESHOLD, iter);
+		
 		System.out.println("Updating statistics files");
 		updateStats(output, REPORTS_DIR, iter, reviewedItemsCount);
 

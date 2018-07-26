@@ -108,9 +108,8 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		System.out.println("Classifying test set into " + output.getPath());
 		classifier.classify(testSet, output);
 
-		File confMatrix = getEmptyFile(DATA_DIR, "Iteration", iter.toString(), "ConfusionMatrix");
-		System.out.println("Calculating Confusion Matrix in " + confMatrix.getPath());
-		outputConfMatrix(output, confMatrix);
+		System.out.println("Calculating Confusion Matrices");
+		outputConfMatrix(DATA_DIR, output, CONFIDENCE_THRESHOLD, iter);
 
 		System.out.println("Updating statistics files");
 		updateStats(output, REPORTS_DIR, iter, reviewedItemsCount);
