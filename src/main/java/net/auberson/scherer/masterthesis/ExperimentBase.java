@@ -235,7 +235,7 @@ public class ExperimentBase {
 		PrintWriter out = IOUtil.getWriter(outputFile);
 		for (ClassifierResult result : results) {
 			out.print("\"" + result.getText() + "\", ");
-			out.println(result.getClassLabel() + ", ");
+			out.print(result.getClassLabel() + ", ");
 			out.print(result.getDetectedClassLabel() + ", ");
 			out.println(result.getConfidence());
 		}
