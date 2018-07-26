@@ -43,8 +43,8 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		System.out.println();
 		System.out.println("[ Iteration 0: Initial Training ]");
 
-		int initialClassCount = classCount - 1;
-		List<String> classNamesExceptLast = classNames.subList(0, initialClassCount - 1);
+		int classCountExceptLast = classCount - 1;
+		List<String> classNamesExceptLast = classNames.subList(0, classCountExceptLast);
 
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
 		System.out.println("Creating training set (missing a class) in " + trainingSet.getPath());
