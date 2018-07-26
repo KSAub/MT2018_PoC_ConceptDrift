@@ -48,10 +48,10 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		List<String> classNamesExceptLast = classNames.subList(0, classCountExceptLast);
 
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
-		System.out.println("Creating training set (missing a class) in " + trainingSet.getPath());
+		System.out.println("Creating training set in " + trainingSet.getPath());
 
 		File testSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Test");
-		System.out.println("Creating test set (missing a class) in " + testSet.getPath());
+		System.out.println("Creating test set in " + testSet.getPath());
 
 		Sampler.sample(new int[] { TRAINING_SET_SIZE, TEST_SET_SIZE }, classNamesExceptLast, sampleCount, trainingSet,
 				testSet);
@@ -109,7 +109,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 			
 			// Create training set missing last class
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
-			System.out.println("Creating training set (missing a class) in " + trainingSet.getPath());
+			System.out.println("Creating training set in " + trainingSet.getPath());
 			Sampler.sample(TRAINING_SET_SIZE, classNamesExceptLast, sampleCount, trainingSet);
 
 			// Create test set including last class
