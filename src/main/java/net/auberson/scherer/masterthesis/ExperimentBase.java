@@ -38,6 +38,9 @@ public class ExperimentBase {
 	protected final Map<String, Integer> sampleCount;
 
 	protected ExperimentBase(String[] classes, int minSampleCount) {
+		// Programmatically suppress the HTTP logging
+		Logger.getLogger("com.ibm.watson.developer_cloud.util.HttpLogging").setLevel(Level.WARNING);
+		
 		// Ensure classes were specified
 		if (classes.length < 2) {
 			System.err.println("Please specify several classes with which to execute the experiment.");
@@ -59,9 +62,6 @@ public class ExperimentBase {
 				System.exit(-1);
 			}
 		}
-
-		// Programmatically suppress the HTTP logging
-		Logger.getLogger("com.ibm.watson.developer_cloud.util.HttpLogging").setLevel(Level.WARNING);
 	}
 
 	/**

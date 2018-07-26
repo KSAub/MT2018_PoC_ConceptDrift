@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 case $1 in
 
 	nightly)
-	  $0 experiment2 electronics gaming security travel cooking pets
+	$0 experiment2 electronics gaming security travel cooking pets
     $0 experiment1 electronics gaming security travel cooking
     ;;
 

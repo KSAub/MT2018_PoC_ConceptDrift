@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -94,6 +96,9 @@ public class BatchClassifier {
 			return svc;
 		}
 
+		// Programmatically suppress the HTTP logging
+		Logger.getLogger("com.ibm.watson.developer_cloud.util.HttpLogging").setLevel(Level.WARNING);
+		
 		// Initialize Watson NLC
 		NLCProperties nlcProps = new NLCProperties();
 		svc = new NaturalLanguageClassifier();
