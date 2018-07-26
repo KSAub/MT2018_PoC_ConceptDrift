@@ -35,7 +35,6 @@ public class ExperimentBase {
 
 	protected final int classCount;
 	protected final List<String> classNames;
-	protected final NaturalLanguageClassifier service;
 	protected final Map<String, Integer> sampleCount;
 
 	protected ExperimentBase(String[] classes, int minSampleCount) {
@@ -63,11 +62,6 @@ public class ExperimentBase {
 
 		// Programmatically suppress the HTTP logging
 		Logger.getLogger("com.ibm.watson.developer_cloud.util.HttpLogging").setLevel(Level.WARNING);
-
-		// Initialize Watson NLC
-		NLCProperties nlcProps = new NLCProperties();
-		service = new NaturalLanguageClassifier();
-		service.setUsernameAndPassword(nlcProps.getUsername(), nlcProps.getPassword());
 	}
 
 	/**
@@ -120,7 +114,7 @@ public class ExperimentBase {
 			name.append(string);
 		}
 		try {
-			return new BatchClassifier(service, name.toString(), "en", trainingSet);
+			return new BatchClassifier(name.toString(), "en", trainingSet);
 		} catch (FileNotFoundException e) {
 			System.err.println("An unexpected error occured trying to train the classifier '" + name + "'");
 			e.printStackTrace();

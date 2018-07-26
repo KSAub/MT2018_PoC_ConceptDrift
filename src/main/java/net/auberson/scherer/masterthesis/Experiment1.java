@@ -35,12 +35,12 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	public Experiment1(String[] classes) {
 		super(classes, Math.max(TRAINING_SET_SIZE, TEST_SET_SIZE));
 	}
-
+//
 //	public void test() {
 //		File reviewFile = new File(
-//				"./data/processed/experiment1/Iteration10Review-electronics-gaming-security-travel-cooking.csv");
-//		File trainingSet = new File("./data/processed/experiment1/Iteration10Training-electronics-gaming-security-travel-cooking.csv");
-//
+//				"./data/processed/experiment1/Iteration1Review-electronics-gaming-security-travel-cooking.csv");
+//		File trainingSet = new File(
+//				"./data/processed/experiment1/Iteration1Training-electronics-gaming-security-travel-cooking.csv");
 //
 //		File trainingSetMerged = getEmptyFile(DATA_DIR, "Iteration", "10", "TrainingMerged");
 //		mergeDataset(trainingSetMerged, TRAINING_SET_SIZE, reviewFile, trainingSet);

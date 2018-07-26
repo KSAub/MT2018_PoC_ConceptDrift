@@ -6,10 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
-import com.ibm.watson.developer_cloud.natural_language_classifier.v1.NaturalLanguageClassifier;
-
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
-import net.auberson.scherer.masterthesis.util.NLCProperties;
 import net.auberson.scherer.masterthesis.util.Project;
 import net.auberson.scherer.masterthesis.util.Sampler;
 
@@ -23,16 +20,12 @@ public class ComputeLearningCurve {
 
 	private static final int TEST_SET_SIZE = 200;
 	public static final File LEARNING_CURVE_REPORTS_DIR = new File("./reports/learning-curve");
-	
+
 	public static void main(String[] args) throws IOException {
 		if (args.length < 1) {
 			System.err.println("Please specify the classes for which to generate the learning curve.");
 			System.exit(-1);
 		}
-
-		NLCProperties nlcProps = new NLCProperties();
-		NaturalLanguageClassifier service = new NaturalLanguageClassifier();
-		service.setUsernameAndPassword(nlcProps.getUsername(), nlcProps.getPassword());
 
 		int classCount = args.length;
 		Collection<String> classNames = Arrays.asList(args);
@@ -43,7 +36,7 @@ public class ComputeLearningCurve {
 			// Respect the Watson NLC's limit:
 			minSampleCount = Project.MAX_SAMPLES_PER_TRAINING / classCount;
 		}
-		int stepSize = 5;//computeStepSize(minSampleCount); TODO
+		int stepSize = 5;// computeStepSize(minSampleCount); TODO
 
 		for (int sampleSize = stepSize; sampleSize <= minSampleCount; sampleSize = sampleSize + stepSize) {
 			System.out.println("\nCalculating accuracy using sample size " + sampleSize);
@@ -58,7 +51,7 @@ public class ComputeLearningCurve {
 			Sampler.sample(TEST_SET_SIZE, classNames, sampleCount, testSet);
 
 			System.out.println("Training Classifier for Sample Size " + sampleSize);
-			BatchClassifier classifier = new BatchClassifier(service, "LearningCurveTestClassifier", "en", trainingSet);
+			BatchClassifier classifier = new BatchClassifier("LearningCurveTestClassifier", "en", trainingSet);
 			System.out.println("Trained " + classifier);
 
 			try {

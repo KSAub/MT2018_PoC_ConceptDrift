@@ -24,6 +24,8 @@ import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.Class
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.ClassifyInput;
 import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.CollectionItem;
 
+import okhttp3.internal.http2.ConnectionShutdownException;
+
 /**
  * A utility that allows the classifier to be called on large files. <br>
  * This class will group together samples in Batches, and call the classifier
@@ -31,17 +33,31 @@ import com.ibm.watson.developer_cloud.natural_language_classifier.v1.model.Colle
  *
  */
 public class BatchClassifier {
-	private final NaturalLanguageClassifier service;
-	private final Classifier classifier;
+	private static final int NUM_RETRIES = 5;
+	private NaturalLanguageClassifier svc;
+	private Classifier classifier;
 
 	/**
 	 * Creates a BatchClassifier by retrieving it using the given ClassifierId
 	 * 
 	 * @param classifierId
 	 */
-	public BatchClassifier(NaturalLanguageClassifier service, String classifierId) {
-		this.classifier = service.getClassifier(classifierId).execute();
-		this.service = service;
+	public BatchClassifier(String classifierId) {
+		int retries = NUM_RETRIES;
+		while (true) {
+			try {
+				this.classifier = getService().getClassifier(classifierId).execute();
+				break;
+			} catch (RuntimeException e) {
+				if (e.getCause() instanceof ConnectionShutdownException) {
+					svc = null;
+				}
+				System.err.println(e.toString());
+				if (--retries == 0) {
+					throw e;
+				}
+			}
+		}
 	}
 
 	/**
@@ -51,27 +67,39 @@ public class BatchClassifier {
 	 * @param trainingSet
 	 * @throws FileNotFoundException
 	 */
-	public BatchClassifier(NaturalLanguageClassifier service, String name, String language, File trainingSet)
-			throws FileNotFoundException {
-		String classifierId = getClassifierId(service, name);
+	public BatchClassifier(String name, String language, File trainingSet) throws FileNotFoundException {
+		String classifierId = getClassifierId(name);
 		if (classifierId != null) {
 			System.out.println("Deleting previously existing Classifier " + classifierId);
-			service.deleteClassifier(classifierId).execute();
+			delete(classifierId);
 		}
 
 		long timerStart = System.currentTimeMillis();
-		Classifier newClassifier = service.createClassifier(name, language, trainingSet).execute();
+		Classifier newClassifier = createClassifier(name, language, trainingSet);
 		while (newClassifier.getStatus().equals("Training")) {
 			try {
 				Thread.sleep(60000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			newClassifier = service.getClassifier(newClassifier.getClassifierId()).execute();
+			newClassifier = updateClassifier(newClassifier);
 		}
 		System.out.println("Classifier trained in " + ((System.currentTimeMillis() - timerStart) / 60000) + " Minutes");
 		this.classifier = newClassifier;
-		this.service = service;
+	}
+
+	private NaturalLanguageClassifier getService() {
+		// Not thread-safe!
+		if (svc != null) {
+			return svc;
+		}
+
+		// Initialize Watson NLC
+		NLCProperties nlcProps = new NLCProperties();
+		svc = new NaturalLanguageClassifier();
+		svc.setUsernameAndPassword(nlcProps.getUsername(), nlcProps.getPassword());
+
+		return svc;
 	}
 
 	/**
@@ -119,7 +147,7 @@ public class BatchClassifier {
 
 			if (batch.isFull() || !inputCsv.hasNext()) {
 
-				ClassificationCollection results = classifyBatch(batch, 5);
+				ClassificationCollection results = classifyBatch(batch);
 
 				for (CollectionItem result : results.getCollection()) {
 					// Output the original text (in quotes)...
@@ -184,7 +212,7 @@ public class BatchClassifier {
 		int incorrect = 0;
 
 		for (Batch batch : allBatches) {
-			ClassificationCollection results = classifyBatch(batch, 5);
+			ClassificationCollection results = classifyBatch(batch);
 			for (CollectionItem result : results.getCollection()) {
 				String expected = batch.expectedValues.get(result.getText());
 				String returned = result.getTopClass();
@@ -238,8 +266,24 @@ public class BatchClassifier {
 		}
 	}
 
-	private String getClassifierId(NaturalLanguageClassifier service, String classifierName) {
-		ClassifierList classifiers = service.listClassifiers().execute();
+	private String getClassifierId(String classifierName) {
+		int retries = NUM_RETRIES;
+		ClassifierList classifiers = null;
+		while (true) {
+			try {
+				classifiers = getService().listClassifiers().execute();
+				break;
+			} catch (RuntimeException e) {
+				if (e.getCause() instanceof ConnectionShutdownException) {
+					svc = null;
+				}
+				System.err.println(e.toString());
+				if (--retries == 0) {
+					throw e;
+				}
+			}
+		}
+
 		for (Classifier classifier : classifiers.getClassifiers()) {
 			if (classifier.getName().equals(classifierName)) {
 				return classifier.getClassifierId();
@@ -248,12 +292,71 @@ public class BatchClassifier {
 		return null;
 	}
 
-	
-	private ClassificationCollection classifyBatch(Batch batch, int retries) {
+	private Classifier updateClassifier(Classifier newClassifier) {
+		int retries = NUM_RETRIES;
 		while (true) {
 			try {
-				return service.classifyCollection(batch.getClassifyCollectionOptions()).execute();
+				return getService().getClassifier(newClassifier.getClassifierId()).execute();
 			} catch (RuntimeException e) {
+				if (e.getCause() instanceof ConnectionShutdownException) {
+					svc = null;
+				}
+				System.err.println(e.toString());
+				if (--retries == 0) {
+					throw e;
+				}
+			}
+		}
+	}
+
+	private Classifier createClassifier(String name, String language, File trainingSet) throws FileNotFoundException {
+		int retries = NUM_RETRIES;
+		while (true) {
+			try {
+				return getService().createClassifier(name, language, trainingSet).execute();
+			} catch (RuntimeException e) {
+				if (e.getCause() instanceof ConnectionShutdownException) {
+					svc = null;
+				}
+				System.err.println(e.toString());
+				if (--retries == 0) {
+					throw e;
+				}
+			}
+		}
+	}
+
+	private ClassificationCollection classifyBatch(Batch batch) {
+		int retries = NUM_RETRIES;
+		while (true) {
+			try {
+				return getService().classifyCollection(batch.getClassifyCollectionOptions()).execute();
+			} catch (RuntimeException e) {
+				if (e.getCause() instanceof ConnectionShutdownException) {
+					svc = null;
+				}
+				System.err.println(e.toString());
+				if (--retries == 0) {
+					throw e;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Causes the underlying classifier to be deleted from the IBM Cloud. This
+	 * object cannot be used afterwards.
+	 */
+	private void delete(String classifierId) {
+		int retries = NUM_RETRIES;
+		while (true) {
+			try {
+				getService().deleteClassifier(classifierId).execute();
+				break;
+			} catch (RuntimeException e) {
+				if (e.getCause() instanceof ConnectionShutdownException) {
+					svc = null;
+				}
 				System.err.println(e.toString());
 				if (--retries == 0) {
 					throw e;
@@ -267,7 +370,7 @@ public class BatchClassifier {
 	 * object cannot be used afterwards.
 	 */
 	public void delete() {
-		service.deleteClassifier(classifier.getClassifierId()).execute();
+		delete(classifier.getClassifierId());
 	}
 
 	public String getName() {
