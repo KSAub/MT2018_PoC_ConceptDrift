@@ -14,8 +14,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-
-import com.ibm.watson.developer_cloud.natural_language_classifier.v1.NaturalLanguageClassifier;
+import org.apache.commons.io.FileUtils;
 
 import net.auberson.scherer.masterthesis.model.ClassifierResult;
 import net.auberson.scherer.masterthesis.model.Element;
@@ -24,7 +23,6 @@ import net.auberson.scherer.masterthesis.model.StatisticsCounter;
 import net.auberson.scherer.masterthesis.model.StatisticsResults;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
 import net.auberson.scherer.masterthesis.util.IOUtil;
-import net.auberson.scherer.masterthesis.util.NLCProperties;
 import net.auberson.scherer.masterthesis.util.Sampler;
 
 /**
@@ -40,7 +38,7 @@ public class ExperimentBase {
 	protected ExperimentBase(String[] classes, int minSampleCount) {
 		// Programmatically suppress the HTTP logging
 		Logger.getLogger("com.ibm.watson.developer_cloud.util.HttpLogging").setLevel(Level.WARNING);
-		
+
 		// Ensure classes were specified
 		if (classes.length < 2) {
 			System.err.println("Please specify several classes with which to execute the experiment.");
@@ -75,6 +73,29 @@ public class ExperimentBase {
 			file.delete();
 			file.getParentFile().mkdirs();
 			file.createNewFile();
+		} catch (IOException e) {
+			System.err.println("A disk error occured trying to create an empty file at " + file.getAbsolutePath());
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return file;
+	}
+
+	/**
+	 * Returns a file in the specified directory consisting of the prefix provided,
+	 * followed by the class names, all in kebap-case. If a file of that name
+	 * exists, it is deleted. A copy of the file passed as source is made as the
+	 * starting point for this file.
+	 */
+	protected File getFileDuplicate(File directory, File source, String... prefixes) {
+		File file = new File(directory, getFileName(prefixes));
+		try {
+			file.delete();
+			if (source != null) {
+				FileUtils.copyFile(source, file);
+			} else {
+				file.createNewFile();
+			}
 		} catch (IOException e) {
 			System.err.println("A disk error occured trying to create an empty file at " + file.getAbsolutePath());
 			e.printStackTrace();
@@ -226,7 +247,7 @@ public class ExperimentBase {
 	 * @param outputFile
 	 */
 	protected void outputClassifierResult(List<? extends ClassifierResult> results, File outputFile) {
-		PrintWriter out = IOUtil.getWriter(outputFile);
+		PrintWriter out = IOUtil.getAppendingWriter(outputFile);
 		for (ClassifierResult result : results) {
 			out.print("\"" + result.getText() + "\", ");
 			out.print(result.getClassLabel() + ", ");
@@ -342,4 +363,56 @@ public class ExperimentBase {
 	private String capitalize(String input) {
 		return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
 	}
+
+	/**
+	 * Updates global and class-specific statistics files
+	 * 
+	 * @param trainingSetSize
+	 * @param iter
+	 * @param reviewedItemsCount
+	 * @param testSetSize
+	 */
+	protected void updateReviewStats(File reviewFile, File outputDir, Object iter) {
+		final Map<String, IncrementableInt> counters = new HashMap<String, IncrementableInt>();
+		outputDir.getParentFile().mkdirs();
+
+		// Initialize counters
+		for (String className : classNames) {
+			counters.put(className, new IncrementableInt());
+		}
+
+		CSVParser inputCsv = IOUtil.openCSV(reviewFile);
+		for (CSVRecord csvRecord : inputCsv) {
+			counters.get(csvRecord.get(1).trim()).inc();
+		}
+		IOUtil.close(inputCsv);
+
+		// Update global statistics file
+		File file = new File(outputDir, getFileName("Review"));
+		PrintWriter out = IOUtil.getAppendingWriter(file);
+		out.print(iter);
+		for (String className : classNames) {
+			out.print(",");
+			out.print(counters.get(className));
+		}
+		out.println();
+
+		IOUtil.close(out);
+	}
+
+	/**
+	 * Empties the review statistics file, ensuring the files exist for appending
+	 */
+	protected void clearReviewStats(File outputDir) {
+		File file = getEmptyFile(outputDir, "Review");
+		PrintWriter out = IOUtil.getAppendingWriter(file);
+		out.print("iter");
+		for (String className : classNames) {
+			out.print(",");
+			out.print(className);
+		}
+		out.println();
+		IOUtil.close(out);
+	}
+
 }

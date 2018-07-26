@@ -35,21 +35,23 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 	public Experiment1(String[] classes) {
 		super(classes, Math.max(TRAINING_SET_SIZE, TEST_SET_SIZE));
 	}
-//
-//	public void test() {
-//		File reviewFile = new File(
-//				"./data/processed/experiment1/Iteration1Review-electronics-gaming-security-travel-cooking.csv");
-//		File trainingSet = new File(
-//				"./data/processed/experiment1/Iteration1Training-electronics-gaming-security-travel-cooking.csv");
-//
-//		File trainingSetMerged = getEmptyFile(DATA_DIR, "Iteration", "10", "TrainingMerged");
-//		mergeDataset(trainingSetMerged, TRAINING_SET_SIZE, reviewFile, trainingSet);
-//	}
+	//
+	// public void test() {
+	// File reviewFile = new File(
+	// "./data/processed/experiment1/Iteration1Review-electronics-gaming-security-travel-cooking.csv");
+	// File trainingSet = new File(
+	// "./data/processed/experiment1/Iteration1Training-electronics-gaming-security-travel-cooking.csv");
+	//
+	// File trainingSetMerged = getEmptyFile(DATA_DIR, "Iteration", "10",
+	// "TrainingMerged");
+	// mergeDataset(trainingSetMerged, TRAINING_SET_SIZE, reviewFile, trainingSet);
+	// }
 
 	public void run() {
 		System.out.println();
 		System.out.println("[ Initial Iteration ]");
 		clearStats(REPORTS_DIR);
+		clearReviewStats(REPORTS_DIR);
 
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
 		System.out.println("Creating training set in " + trainingSet.getPath());
@@ -61,6 +63,8 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 
 		File output = trainAndClassify(trainingSet, testSet, 0, 0);
 
+		File reviewFile = null;
+
 		for (int i = 1; i <= ITERATIONS; i++) {
 			System.out.println();
 			System.out.println("[ Iteration " + i + " ]");
@@ -69,9 +73,10 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			List<ClassifierResult> reviewedEntries = getSamplesUnderThreshold(output, CONFIDENCE_THRESHOLD);
 			System.out.println(reviewedEntries.size() + " samples were reviewed this iteration.");
 
-			File reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
+			reviewFile = getFileDuplicate(DATA_DIR, reviewFile, "Iteration", Integer.toString(i), "Review");
 			System.out.println("Creating review file in " + reviewFile.getPath());
 			outputClassifierResult(reviewedEntries, reviewFile);
+			updateReviewStats(reviewFile, REPORTS_DIR, i);
 
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
 			System.out.println("Creating training set in " + trainingSet.getPath());

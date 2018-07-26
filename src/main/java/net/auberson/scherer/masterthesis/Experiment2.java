@@ -36,7 +36,8 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 
 	public void run() {
 		clearStats(REPORTS_DIR);
-
+		clearReviewStats(REPORTS_DIR);
+		
 		// Initial Training
 		// Remove the last class before training, train and test using all but the last
 		// class
@@ -91,7 +92,9 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 
 		System.out.println("Updating statistics files");
 		updateStats(output, REPORTS_DIR, "0a", 0);
-
+		
+		File reviewFile = null;
+		
 		// Retrain a number of times, using the classes with the least confidence
 		for (int i = 1; i <= ITERATIONS; i++) {
 			System.out.println();
@@ -101,10 +104,11 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 			List<ClassifierResult> reviewedEntries = getSamplesUnderThreshold(output, CONFIDENCE_THRESHOLD);
 			System.out.println(reviewedEntries.size() + " samples were reviewed this iteration.");
 
-			File reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
+			reviewFile = getFileDuplicate(DATA_DIR, reviewFile, "Iteration", Integer.toString(i), "Review");
 			System.out.println("Creating review file in " + reviewFile.getPath());
 			outputClassifierResult(reviewedEntries, reviewFile);
-
+			updateReviewStats(reviewFile, REPORTS_DIR, i);
+			
 			// Create training set missing last class
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
 			System.out.println("Creating training set (missing a class) in " + trainingSet.getPath());
