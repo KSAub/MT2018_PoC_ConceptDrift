@@ -326,43 +326,74 @@ public class ExperimentBase {
 	 * @param reviewedItemsCount
 	 * @param testSetSize
 	 */
-	protected void updateStats(File results, File outputDir, Object iter, int reviewedItemsCount) {
+	protected void updateStats(File outputDir, File results, double threshold, Object iter, int reviewedItemsCount) {
 		outputDir.getParentFile().mkdirs();
 		CSVParser inputCsv = IOUtil.openCSV(results);
 
+		String threshPercent = Long.toString(Math.round(threshold * 100));
+
 		// Initialize empty structure to count tn, tp, fn, fp
 		List<StatisticsCounter> counters = new ArrayList<StatisticsCounter>(classCount);
+		List<StatisticsCounter> countersUnder = new ArrayList<StatisticsCounter>(classCount);
+		List<StatisticsCounter> countersOver = new ArrayList<StatisticsCounter>(classCount);
 		for (String className : classNames) {
-			counters.add(new StatisticsCounter(className));
+			counters.add(new StatisticsCounter(className, "All"));
+			countersUnder.add(new StatisticsCounter(className, "Under" + threshPercent));
+			countersOver.add(new StatisticsCounter(className, "Over" + threshPercent));
 		}
 
 		// Iterate through all result records, and update the counters
 		for (CSVRecord csvRecord : inputCsv) {
 			final String actualClass = csvRecord.get(1).trim();
 			final String detectedClass = csvRecord.get(2).trim();
+			final double confidence = Double.parseDouble(csvRecord.get(3).trim());
 
 			// Update each statistics object
 			for (StatisticsCounter counter : counters) {
 				counter.update(actualClass, detectedClass);
 			}
+			if (confidence < threshold) {
+				for (StatisticsCounter counter : countersUnder) {
+					counter.update(actualClass, detectedClass);
+				}
+			} else {
+				for (StatisticsCounter counter : countersOver) {
+					counter.update(actualClass, detectedClass);
+				}
+			}
+
 		}
 		IOUtil.close(inputCsv);
 
 		// Calculate statistics and update the stats files
+		computeResultsAndOutput(outputDir, iter, reviewedItemsCount, counters);
+		computeResultsAndOutput(outputDir, iter, reviewedItemsCount, countersUnder);
+		computeResultsAndOutput(outputDir, iter, reviewedItemsCount, countersOver);
+
+		// Update global statistics file
+		aggregateResultsAndOutput(outputDir, iter, reviewedItemsCount, counters);
+		aggregateResultsAndOutput(outputDir, iter, reviewedItemsCount, countersUnder);
+		aggregateResultsAndOutput(outputDir, iter, reviewedItemsCount, countersOver);
+	}
+
+	private void aggregateResultsAndOutput(File outputDir, Object iter, int reviewedItemsCount,
+			List<StatisticsCounter> counters) {
+		File file = new File(outputDir, getFileName("Stats"));
+		PrintWriter out = IOUtil.getAppendingWriter(file);
+		StatisticsResults stats = StatisticsResults.aggregate(counters);
+		stats.output(out, iter, reviewedItemsCount, counters.get(0).getGroupName());
+		IOUtil.close(out);
+	}
+
+	private void computeResultsAndOutput(File outputDir, Object iter, int reviewedItemsCount,
+			List<StatisticsCounter> counters) {
 		for (StatisticsCounter counter : counters) {
 			File file = new File(outputDir, getFileName("Stats", capitalize(counter.getClassLabel())));
 			PrintWriter out = IOUtil.getAppendingWriter(file);
 			StatisticsResults stats = new StatisticsResults(counter);
-			stats.output(out, iter, reviewedItemsCount);
+			stats.output(out, iter, reviewedItemsCount, counter.getGroupName());
 			IOUtil.close(out);
 		}
-
-		// Update global statistics file
-		File file = new File(outputDir, getFileName("Stats"));
-		PrintWriter out = IOUtil.getAppendingWriter(file);
-		StatisticsResults stats = StatisticsResults.aggregate(counters);
-		stats.output(out, iter, reviewedItemsCount);
-		IOUtil.close(out);
 	}
 
 	/**

@@ -38,4 +38,8 @@ public class IncrementableInt {
 		return value < otherValue;
 	}
 
+	@Override
+	public String toString() {
+		return Integer.toString(value);
+	}
 }

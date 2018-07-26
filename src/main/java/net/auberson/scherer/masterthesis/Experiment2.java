@@ -67,7 +67,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		outputConfMatrix(DATA_DIR, output, CONFIDENCE_THRESHOLD, 0);
 
 		System.out.println("Updating statistics files");
-		updateStats(output, REPORTS_DIR, 0, 0);
+		updateStats(REPORTS_DIR, output, CONFIDENCE_THRESHOLD, 0, 0);
 
 		// Initial iteration:
 		// No retraining, test using all classes
@@ -89,7 +89,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		outputConfMatrix(DATA_DIR, output, CONFIDENCE_THRESHOLD, "0a");
 
 		System.out.println("Updating statistics files");
-		updateStats(output, REPORTS_DIR, "0a", 0);
+		updateStats(REPORTS_DIR, output, CONFIDENCE_THRESHOLD, "0a", 0);
 		
 		File reviewFile = null;
 		
@@ -144,7 +144,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		outputConfMatrix(DATA_DIR, output, CONFIDENCE_THRESHOLD, iter);
 		
 		System.out.println("Updating statistics files");
-		updateStats(output, REPORTS_DIR, iter, reviewedItemsCount);
+		updateStats(REPORTS_DIR, output, CONFIDENCE_THRESHOLD, iter, reviewedItemsCount);
 
 		System.out.println("Deleting Classifier " + classifier.getName());
 		classifier.delete();

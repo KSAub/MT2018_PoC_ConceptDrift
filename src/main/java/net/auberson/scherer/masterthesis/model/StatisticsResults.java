@@ -75,13 +75,13 @@ public class StatisticsResults {
 				+ ppv + ", tnr=" + tnr + ", bm=" + bm + ", acc=" + acc + ", err=" + err + ", f1=" + f1 + "]";
 	}
 
-	public void output(PrintWriter out, Object iter, int reviewedItemsCount) {
-		out.println(iter + ", " + reviewedItemsCount + ", " + tp + ", " + fp + ", " + fn + ", " + tn + ", " + tpr + ", "
-				+ ppv + ", " + tnr + ", " + bm + ", " + acc + ", " + err + ", " + f1);
+	public void output(PrintWriter out, Object iter, int reviewedItemsCount, String group) {
+		out.println(iter + ", " + group + ", " + reviewedItemsCount + ", " + tp + ", " + fp + ", " + fn + ", " + tn
+				+ ", " + tpr + ", " + ppv + ", " + tnr + ", " + bm + ", " + acc + ", " + err + ", " + f1);
 	}
 
 	public static void outputHeader(PrintWriter out) {
-		out.println("iteration, reviewedItemsCount, tp, fp, fn, tn, tpr, ppv, tnr, bm, acc, err, f1");
+		out.println("iteration, group, reviewedItemsCount, tp, fp, fn, tn, tpr, ppv, tnr, bm, acc, err, f1");
 	}
 
 }

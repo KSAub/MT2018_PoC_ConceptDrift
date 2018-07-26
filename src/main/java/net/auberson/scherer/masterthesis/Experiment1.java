@@ -112,7 +112,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		outputConfMatrix(DATA_DIR, output, CONFIDENCE_THRESHOLD, iter);
 
 		System.out.println("Updating statistics files");
-		updateStats(output, REPORTS_DIR, iter, reviewedItemsCount);
+		updateStats(REPORTS_DIR, output, CONFIDENCE_THRESHOLD, iter, reviewedItemsCount);
 
 		System.out.println("Deleting Classifier " + classifier.getName());
 		classifier.delete();
