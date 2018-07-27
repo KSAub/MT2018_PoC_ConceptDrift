@@ -85,6 +85,11 @@ public class IOUtil {
 	 * the contents of the first file are appended to the other.
 	 */
 	public static void copyFile(File source, File dest, boolean append) {
+		if (source == null) {
+			// Nothing to copy, return.
+			return;
+		}
+
 		try {
 			InputStream is = null;
 			OutputStream os = null;
