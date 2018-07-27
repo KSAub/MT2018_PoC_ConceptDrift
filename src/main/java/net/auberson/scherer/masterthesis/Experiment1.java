@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.auberson.scherer.masterthesis.model.ClassifierResult;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
+import net.auberson.scherer.masterthesis.util.IOUtil;
 import net.auberson.scherer.masterthesis.util.Sampler;
 
 /**
@@ -63,7 +64,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 
 		File output = trainAndClassify(trainingSet, testSet, 0, 0);
 
-		File reviewFile = null;
+		File previousReviewFile = null;
 
 		for (int i = 1; i <= ITERATIONS; i++) {
 			System.out.println();
@@ -73,9 +74,12 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			List<ClassifierResult> reviewedEntries = getSamplesUnderThreshold(output, CONFIDENCE_THRESHOLD);
 			System.out.println(reviewedEntries.size() + " samples were reviewed this iteration.");
 
-			reviewFile = getFileDuplicate(DATA_DIR, reviewFile, "Iteration", Integer.toString(i), "Review");
+			File reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
 			System.out.println("Creating review file in " + reviewFile.getPath());
 			outputClassifierResult(reviewedEntries, reviewFile);
+			IOUtil.copyFile(previousReviewFile, reviewFile, true);
+			previousReviewFile = reviewFile;
+			
 			updateReviewStats(reviewFile, REPORTS_DIR, i);
 
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");

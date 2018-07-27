@@ -2,10 +2,14 @@ package net.auberson.scherer.masterthesis.util;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 
 import org.apache.commons.csv.CSVFormat;
@@ -48,7 +52,7 @@ public class IOUtil {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Opens a file for output, appending to an existing file instead of overwriting
 	 */
@@ -62,7 +66,7 @@ public class IOUtil {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Close any kind of IO resource
 	 */
@@ -75,4 +79,33 @@ public class IOUtil {
 			System.exit(-1);
 		}
 	}
+
+	/**
+	 * Copies the content of one file into the other. If the boolean flag is set,
+	 * the contents of the first file are appended to the other.
+	 */
+	public static void copyFile(File source, File dest, boolean append) {
+		try {
+			InputStream is = null;
+			OutputStream os = null;
+			try {
+				is = new FileInputStream(source);
+				os = new FileOutputStream(dest, append);
+				byte[] buffer = new byte[1024];
+				int length;
+				while ((length = is.read(buffer)) > 0) {
+					os.write(buffer, 0, length);
+				}
+			} finally {
+				is.close();
+				os.close();
+			}
+		} catch (IOException e) {
+			System.err.println(
+					"Copy operation failed from " + source.getAbsolutePath() + " to " + dest.getAbsolutePath());
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
+
 }

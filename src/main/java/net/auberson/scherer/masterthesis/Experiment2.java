@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.auberson.scherer.masterthesis.model.ClassifierResult;
 import net.auberson.scherer.masterthesis.util.BatchClassifier;
+import net.auberson.scherer.masterthesis.util.IOUtil;
 import net.auberson.scherer.masterthesis.util.Sampler;
 
 /**
@@ -91,7 +92,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 		System.out.println("Updating statistics files");
 		updateStats(REPORTS_DIR, output, CONFIDENCE_THRESHOLD, "0a", 0);
 		
-		File reviewFile = null;
+		File previousReviewFile = null;
 		
 		// Retrain a number of times, using the classes with the least confidence
 		for (int i = 1; i <= ITERATIONS; i++) {
@@ -102,9 +103,12 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 			List<ClassifierResult> reviewedEntries = getSamplesUnderThreshold(output, CONFIDENCE_THRESHOLD);
 			System.out.println(reviewedEntries.size() + " samples were reviewed this iteration.");
 
-			reviewFile = getFileDuplicate(DATA_DIR, reviewFile, "Iteration", Integer.toString(i), "Review");
+			File reviewFile = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Review");
 			System.out.println("Creating review file in " + reviewFile.getPath());
 			outputClassifierResult(reviewedEntries, reviewFile);
+			IOUtil.copyFile(previousReviewFile, reviewFile, true);
+			previousReviewFile = reviewFile;
+			
 			updateReviewStats(reviewFile, REPORTS_DIR, i);
 			
 			// Create training set missing last class
