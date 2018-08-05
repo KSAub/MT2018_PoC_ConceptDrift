@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,8 @@ import java.util.logging.Logger;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.stat.Frequency;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import net.auberson.scherer.masterthesis.model.ClassifierResult;
 import net.auberson.scherer.masterthesis.model.Element;
@@ -34,6 +37,12 @@ public class ExperimentBase {
 	protected final int classCount;
 	protected final List<String> classNames;
 	protected final Map<String, Integer> sampleCount;
+
+	protected ExperimentBase() {
+		classCount = 0;
+		classNames = Collections.emptyList();
+		sampleCount = Collections.emptyMap();
+	}
 
 	protected ExperimentBase(String[] classes, int minSampleCount) {
 		// Programmatically suppress the HTTP logging
@@ -464,6 +473,107 @@ public class ExperimentBase {
 			out.print(",");
 			out.print(className);
 		}
+		out.println();
+		IOUtil.close(out);
+	}
+
+	/**
+	 * Updates Confidence Stats file
+	 * 
+	 * @param trainingSetSize
+	 * @param iter
+	 * @param reviewedItemsCount
+	 * @param testSetSize
+	 */
+	protected void updateConfidenceStats(File outputFile, File outputDir, Object iter) {
+		outputDir.getParentFile().mkdirs();
+
+		// Fill an Apache Commons Math object with all confidence values for the first class
+		DescriptiveStatistics stats = new DescriptiveStatistics();
+		Frequency freq = new Frequency();
+		CSVParser inputCsv = IOUtil.openCSV(outputFile);
+		for (CSVRecord csvRecord : inputCsv) {
+			double confidence = Double.parseDouble(csvRecord.get(3).trim());
+			stats.addValue(confidence);
+			freq.addValue(Double.valueOf(confidence));
+		}
+		IOUtil.close(inputCsv);
+
+		// Update global statistics file
+		File file = new File(outputDir, getFileName("Confidence"));
+		PrintWriter out = IOUtil.getAppendingWriter(file);
+		out.print(iter);
+		out.print(",");
+		out.print(stats.getN());
+		out.print(",");
+		out.print(stats.getMin());
+		out.print(",");
+		out.print(stats.getMax());
+		out.print(",");
+		out.print(stats.getMean());
+		out.print(",");
+		out.print(stats.getGeometricMean());
+		out.print(",");
+		out.print(stats.getPercentile(50));
+		out.print(",");
+		out.print(stats.getKurtosis());
+		out.print(",");
+		out.print(stats.getVariance());
+		out.print(",");
+		out.print(stats.getSkewness());
+		out.print(",");
+		out.print(stats.getStandardDeviation());
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(.1d)));
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(.2d)));
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(.3d)));
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(.4d)));
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(.5d)));
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(.6d)));
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(.7d)));
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(.8d)));
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(.9d)));
+		out.print(",");
+		out.print(freq.getCumFreq(Double.valueOf(1d)));
+		out.println();
+		
+		IOUtil.close(out);
+	}
+
+	/**
+	 * Empties the review statistics file, ensuring the files exist for appending
+	 */
+	protected void clearConfidenceStats(File outputDir) {
+		File file = getEmptyFile(outputDir, "Confidence");
+		PrintWriter out = IOUtil.getAppendingWriter(file);
+		out.print("iter, ");
+		out.print("count, ");
+		out.print("min, ");
+		out.print("max, ");
+		out.print("mean, ");
+		out.print("geometricMean, ");
+		out.print("median, ");
+		out.print("kurtosis, ");
+		out.print("variance, ");
+		out.print("skewness, ");
+		out.print("sd, ");
+		out.print("cf10, ");
+		out.print("cf20, ");
+		out.print("cf30, ");
+		out.print("cf40, ");
+		out.print("cf50, ");
+		out.print("cf60, ");
+		out.print("cf70, ");
+		out.print("cf80, ");
+		out.print("cf90");
 		out.println();
 		IOUtil.close(out);
 	}

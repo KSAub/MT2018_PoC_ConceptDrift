@@ -38,6 +38,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 	public void run() {
 		clearStats(REPORTS_DIR);
 		clearReviewStats(REPORTS_DIR);
+		clearConfidenceStats(REPORTS_DIR);
 		
 		// Initial Training
 		// Remove the last class before training, train and test using all but the last
@@ -110,6 +111,7 @@ public class Experiment2 extends ExperimentBase implements Runnable {
 			previousReviewFile = reviewFile;
 			
 			updateReviewStats(reviewFile, REPORTS_DIR, i);
+			updateConfidenceStats(output, REPORTS_DIR, i);
 			
 			// Create training set missing last class
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");

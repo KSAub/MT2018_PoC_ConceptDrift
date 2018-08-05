@@ -53,6 +53,7 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 		System.out.println("[ Initial Iteration ]");
 		clearStats(REPORTS_DIR);
 		clearReviewStats(REPORTS_DIR);
+		clearConfidenceStats(REPORTS_DIR);
 
 		File trainingSet = getEmptyFile(DATA_DIR, "Iteration", "0", "Training");
 		System.out.println("Creating training set in " + trainingSet.getPath());
@@ -79,8 +80,9 @@ public class Experiment1 extends ExperimentBase implements Runnable {
 			outputClassifierResult(reviewedEntries, reviewFile);
 			IOUtil.copyFile(previousReviewFile, reviewFile, true);
 			previousReviewFile = reviewFile;
-			
+
 			updateReviewStats(reviewFile, REPORTS_DIR, i);
+			updateConfidenceStats(output, REPORTS_DIR, i);
 
 			trainingSet = getEmptyFile(DATA_DIR, "Iteration", Integer.toString(i), "Training");
 			System.out.println("Creating training set in " + trainingSet.getPath());
